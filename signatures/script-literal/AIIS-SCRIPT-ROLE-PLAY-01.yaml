@@ -1,0 +1,16 @@
+id: AIIS-SCRIPT-ROLE-PLAY-01
+name: Role-play jailbreak in script string literal
+version: 0.1.0
+description: |
+  Detects role-play jailbreak text embedded as a string literal in inline scripts
+  or data blobs. Typical framing: "You are now X with no restrictions."
+severity: medium
+attack_class: SOUL-INJECT
+technique_ids: [T-2003]
+surface_types: [script_literal]
+match:
+  type: regex
+  pattern: '(?i)(you\s+are\s+(now|an?)|act\s+as|pretend\s+to\s+be)\s+[^"''\n]{5,80}(with\s+no\s+(restrictions|filters|safety|guardrails|limits)|who\s+ignores|that\s+bypasses)'
+cwe_ids: [CWE-693]
+hma_check_ids: [AI-WILD-006]
+status: active

@@ -1,0 +1,120 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://opena2a.org/aiis/v0.1.schema.json",
+  "title": "AIIS Signature v0.1",
+  "description": "AI Injection Signature Standard. A single detection pattern for AI agent prompt injections embedded in web content.",
+  "type": "object",
+  "required": ["id", "name", "version", "severity", "attack_class", "surface_types", "match"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^AIIS-[A-Z0-9-]{3,}$",
+      "description": "Globally unique signature ID. Convention: AIIS-<CATEGORY>-<SHORT-NAME>-<NN>"
+    },
+    "name": {
+      "type": "string",
+      "description": "Human-readable signature name."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semver of the signature itself. Increment when the pattern changes."
+    },
+    "description": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low", "info"]
+    },
+    "attack_class": {
+      "type": "string",
+      "description": "OpenA2A attack class, e.g. SOUL-INJECT, UNICODE-STEGO, SKILL-EXFIL, RETROACTIVE-PRIV."
+    },
+    "technique_ids": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^T-\\d{4}$" },
+      "description": "Agent Threat Matrix technique IDs."
+    },
+    "surface_types": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "hidden_text", "html_comment", "meta_tag", "json_ld", "robots_llms",
+          "alt_aria", "open_graph", "noscript", "http_header", "inline_style",
+          "script_literal", "data_attr"
+        ]
+      }
+    },
+    "match": {
+      "type": "object",
+      "required": ["type"],
+      "oneOf": [
+        {
+          "properties": {
+            "type": { "const": "regex" },
+            "pattern": { "type": "string" },
+            "flags": { "type": "string", "pattern": "^[imsxU]*$" }
+          },
+          "required": ["pattern"]
+        },
+        {
+          "properties": {
+            "type": { "const": "substring" },
+            "contains": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+            "case_sensitive": { "type": "boolean", "default": false }
+          },
+          "required": ["contains"]
+        },
+        {
+          "properties": {
+            "type": { "const": "unicode_range" },
+            "ranges": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "from": { "type": "string" },
+                  "to": { "type": "string" }
+                },
+                "required": ["from", "to"]
+              }
+            },
+            "min_matches": { "type": "integer", "minimum": 1, "default": 1 }
+          },
+          "required": ["ranges"]
+        },
+        {
+          "properties": {
+            "type": { "const": "composite" },
+            "all_of": { "type": "array", "items": { "$ref": "#/properties/match" } },
+            "any_of": { "type": "array", "items": { "$ref": "#/properties/match" } }
+          }
+        }
+      ]
+    },
+    "cwe_ids": {
+      "type": "array",
+      "items": { "type": "string", "pattern": "^CWE-\\d+$" }
+    },
+    "hma_check_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Linked HackMyAgent check IDs, typically AI-WILD-*."
+    },
+    "false_positive_notes": {
+      "type": "string"
+    },
+    "references": {
+      "type": "array",
+      "items": { "type": "string", "format": "uri-reference" }
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "active", "deprecated"],
+      "default": "active"
+    }
+  }
+}

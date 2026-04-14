@@ -1,0 +1,20 @@
+id: AIIS-ATTR-EXFIL-URL-01
+name: Exfiltration instruction with attacker URL in attributes
+version: 0.1.0
+description: |
+  Detects attacker instructions asking the agent to send conversation content or
+  scraped data to an external URL, placed in HTML attributes.
+severity: critical
+attack_class: SKILL-EXFIL
+technique_ids: [T-2005]
+surface_types: [alt_aria, data_attr, meta_tag, html_comment]
+match:
+  type: composite
+  all_of:
+    - type: regex
+      pattern: '(?i)(send|post|submit|upload|transmit|forward|exfiltrate)\s+(this|the|all|your|user|conversation|history|context)'
+    - type: regex
+      pattern: 'https?://[a-z0-9.-]+(:\d+)?(/[^\s"]*)?'
+cwe_ids: [CWE-200]
+hma_check_ids: [AI-WILD-005]
+status: active

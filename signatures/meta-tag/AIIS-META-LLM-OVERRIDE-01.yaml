@@ -1,0 +1,17 @@
+id: AIIS-META-LLM-OVERRIDE-01
+name: Unauthorized llms.txt / AI-meta override directive
+version: 0.1.0
+description: |
+  Detects meta tags or llms.txt blocks attempting to issue directives to AI
+  agents (e.g., instructing them to ignore the site's robots.txt, execute a
+  tool, or send data elsewhere).
+severity: high
+attack_class: SOUL-INJECT
+technique_ids: [T-2001, T-2005]
+surface_types: [meta_tag, robots_llms]
+match:
+  type: regex
+  pattern: '(?i)(ai-instructions|llm-directive|agent-override|ai-behavior)["''\s:=]+.{0,400}(ignore|bypass|execute|fetch|exfiltrate|send)'
+cwe_ids: [CWE-74]
+hma_check_ids: [AI-WILD-007]
+status: active

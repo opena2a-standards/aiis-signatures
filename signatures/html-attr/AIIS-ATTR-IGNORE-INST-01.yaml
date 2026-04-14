@@ -1,0 +1,17 @@
+id: AIIS-ATTR-IGNORE-INST-01
+name: Ignore-previous-instructions injection in HTML attributes
+version: 0.1.0
+description: |
+  Detects the canonical "ignore previous instructions" payload placed in alt,
+  title, aria-*, or data-* attributes. Agents that read attributes as part of
+  page understanding will be exposed to this.
+severity: high
+attack_class: SOUL-INJECT
+technique_ids: [T-2001]
+surface_types: [alt_aria, data_attr, html_comment, meta_tag]
+match:
+  type: regex
+  pattern: '(?i)(ignore\s+(all\s+)?(previous|prior|above|earlier)\s+instructions|disregard\s+(previous|prior|the\s+above)|forget\s+everything\s+(above|before|you))'
+cwe_ids: [CWE-74]
+hma_check_ids: [AI-WILD-004]
+status: active

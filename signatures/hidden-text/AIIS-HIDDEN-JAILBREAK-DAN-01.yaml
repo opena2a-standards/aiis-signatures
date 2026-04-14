@@ -1,0 +1,16 @@
+id: AIIS-HIDDEN-JAILBREAK-DAN-01
+name: DAN-family jailbreak prompt in hidden text
+version: 0.1.0
+description: |
+  Detects DAN ("Do Anything Now") and adjacent jailbreak patterns in hidden text.
+  These payloads try to frame the agent as a fictional unbounded assistant.
+severity: high
+attack_class: SOUL-INJECT
+technique_ids: [T-2003]
+surface_types: [hidden_text, html_comment]
+match:
+  type: regex
+  pattern: '(?i)(do\s+anything\s+now|DAN\s+mode|jailbreak|developer\s+mode|pretend\s+(you|to\s+be)\s+(are\s+)?(an?\s+)?(AI|assistant)\s+(that|which|who)\s+(can|will|has\s+no))'
+cwe_ids: [CWE-693]
+hma_check_ids: [AI-WILD-003]
+status: active

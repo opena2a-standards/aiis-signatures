@@ -1,0 +1,23 @@
+id: AIIS-HIDDEN-ROLE-INJECT-01
+name: Role injection via fake system marker in hidden text
+version: 0.1.0
+description: |
+  Detects prompt injection payloads hidden in CSS-concealed text that attempt to
+  impersonate a system or admin role and override the agent's instructions. The
+  canonical pattern is a bracketed role tag ([SYSTEM], [ADMIN], [INST]) followed
+  within ~200 characters by an override instruction (ignore, disregard, reveal).
+severity: high
+attack_class: SOUL-INJECT
+technique_ids: [T-2001]
+surface_types: [hidden_text]
+match:
+  type: regex
+  pattern: '(?i)\[?\s*(SYSTEM|ADMIN|INST)\s*\]?.{0,200}(ignore|override|disregard|forget|reveal)'
+cwe_ids: [CWE-74]
+hma_check_ids: [AI-WILD-001]
+false_positive_notes: >
+  Security research articles quoting known injection samples may trigger. Pair
+  with a "not on security/research domain" domain-allowlist for production use.
+references:
+  - https://arxiv.org/abs/2306.05499
+status: active

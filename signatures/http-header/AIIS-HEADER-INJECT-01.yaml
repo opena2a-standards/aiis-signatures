@@ -1,0 +1,17 @@
+id: AIIS-HEADER-INJECT-01
+name: Prompt injection in custom HTTP response header
+version: 0.1.0
+description: |
+  Detects custom HTTP headers containing natural-language AI-targeted directives.
+  Headers named X-AI-*, X-LLM-*, X-Agent-* are typical, and the value contains
+  role markers or override instructions.
+severity: medium
+attack_class: SOUL-INJECT
+technique_ids: [T-2001]
+surface_types: [http_header]
+match:
+  type: regex
+  pattern: '(?i)(x-ai-|x-llm-|x-agent-|ai-instruction).{0,200}(ignore|override|reveal|execute|run|fetch|send)'
+cwe_ids: [CWE-74]
+hma_check_ids: [AI-WILD-010]
+status: active
