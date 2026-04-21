@@ -12,7 +12,7 @@ surface_types: [hidden_text, html_comment, alt_aria, data_attr, meta_tag, script
 match:
   type: unicode_range
   ranges:
-    - { from: "\uE0000", to: "\uE007F" }
+    - { from: "\U000E0000", to: "\U000E007F" }
   min_matches: 3
 cwe_ids: [CWE-116]
 hma_check_ids: [AI-WILD-008]
