@@ -1,0 +1,26 @@
+id: AIIS-EXPOSURE-LITELLM-MODELS-01
+category: exposure
+name: Exposed LiteLLM proxy
+version: 0.1.0
+description: |
+  Detects LiteLLM Proxy's /v1/models or /health endpoints. LiteLLM aggregates
+  multiple LLM backends behind a single OpenAI-compatible API; the response
+  includes LiteLLM-specific keys such as "litellm_params", "healthy_endpoints",
+  or "litellm_version".
+severity: medium
+attack_class: EXPOSURE-LLM-GATEWAY
+technique_ids: [T-1001, T-6007]
+surface_types: [http_body]
+match:
+  type: composite
+  any_of:
+    - { type: substring, contains: ["\"litellm_params\":"] }
+    - { type: substring, contains: ["\"healthy_endpoints\":", "\"unhealthy_endpoints\":"] }
+    - { type: substring, contains: ["\"litellm_version\":"] }
+cwe_ids: [CWE-200]
+references:
+  - https://docs.litellm.ai/docs/proxy/quick_start
+false_positive_notes: >
+  Very low. These keys are LiteLLM-internal and do not appear in other common
+  LLM gateway responses.
+status: draft

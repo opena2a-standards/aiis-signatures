@@ -1,10 +1,21 @@
 # AIIS Signatures
 
-**AI Injection Signature Standard** — an open, YARA-style detection format for AI agent prompt injections embedded in web content.
+**AI Injection and Infrastructure Signature Standard** — an open, YARA-style detection format for AI agent prompt injections and public AI-agent infrastructure exposure.
 
 AIIS is the public counterpart of the OpenA2A HoneyMap scanner and is published here under Apache License 2.0. Anyone can read, reuse, extend, or contribute signatures. The goal is to establish an interoperable detection standard the same way YARA did for malware.
 
+## Two signature categories
+
+Each signature declares a `category`:
+
+- **`injection`** (default) — matches prompt-injection artefacts embedded in public content: hidden text, HTML comments, script literals, meta tags, attributes, and so on. Detects the *attack payload*.
+- **`exposure`** — matches evidence that a host publicly exposes an AI-agent component: MCP servers, LLM gateways, self-hosted LLM UIs, agent frameworks, RAG services, AI copilots, vector databases, tool registries, unauthenticated admin endpoints, and known-vulnerable version strings. Detects the *attack surface*, not a specific attack.
+
+Older signatures without an explicit `category` field are treated as `injection`.
+
 ## What AIIS signatures detect
+
+### Injection category
 
 Prompt injections, jailbreaks, exfiltration instructions, and steganographic payloads hidden in:
 
@@ -19,12 +30,28 @@ Prompt injections, jailbreaks, exfiltration instructions, and steganographic pay
 - `noscript` / `iframe srcdoc` fallback content
 - Inline styles with embedded instructions
 
+### Exposure category
+
+Fingerprints of publicly-reachable AI infrastructure:
+
+- MCP server banners and JSON-RPC response shapes (`EXPOSURE-MCP-SERVER`)
+- LLM gateways: LiteLLM, OpenRouter-style proxies (`EXPOSURE-LLM-GATEWAY`)
+- Self-hosted LLM servers: Ollama, llama.cpp, vLLM, LocalAI, Text Generation WebUI (`EXPOSURE-SELFHOSTED-LLM`)
+- Agent frameworks: LangServe, AutoGen, CrewAI, LlamaIndex (`EXPOSURE-AGENT-FRAMEWORK`)
+- RAG services: Haystack, RAGFlow, LlamaIndex query endpoints (`EXPOSURE-RAG-SERVICE`)
+- AI copilots: self-hosted Copilot-style proxies (`EXPOSURE-AI-COPILOT`)
+- Vector databases: Chroma, Qdrant, Milvus, Weaviate (`EXPOSURE-VECTOR-DB`)
+- Tool registries and MCP catalogues (`EXPOSURE-TOOL-REGISTRY`)
+- Any of the above reachable without auth or with default credentials (`EXPOSURE-AUTH-MISCONFIG`)
+- Running versions with published CVEs (`EXPOSURE-VERSION-DRIFT`)
+
 ## Schema
 
 Each signature is a JSON/YAML file under `signatures/<category>/` conforming to `schema/aiis-v0.1.schema.json`.
 
 ```yaml
 id: AIIS-PROMPT-ROLE-INJECT-01
+category: injection
 name: Role injection via hidden-text system marker
 version: 0.1.0
 severity: high
@@ -41,6 +68,25 @@ references:
 false_positive_notes: >
   May fire on security research articles that quote injection samples. Pair with
   domain context (not a known research/docs domain) for production use.
+```
+
+An exposure-category signature example:
+
+```yaml
+id: AIIS-EXPOSURE-OLLAMA-TAGS-01
+category: exposure
+name: Exposed Ollama model listing
+version: 0.1.0
+severity: medium
+attack_class: EXPOSURE-SELFHOSTED-LLM
+technique_ids: [T-1001]
+surface_types: [http_body]
+match:
+  type: composite
+  all_of:
+    - { type: substring, contains: ["\"models\":"] }
+    - { type: regex, pattern: '"modified_at"\s*:\s*"[0-9]{4}-[0-9]{2}-[0-9]{2}' }
+status: draft
 ```
 
 ## Repository layout

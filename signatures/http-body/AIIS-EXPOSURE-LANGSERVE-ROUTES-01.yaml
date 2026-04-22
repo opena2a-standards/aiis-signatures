@@ -1,0 +1,31 @@
+id: AIIS-EXPOSURE-LANGSERVE-ROUTES-01
+category: exposure
+name: Exposed LangServe runnable routes
+version: 0.1.0
+description: |
+  Detects LangServe's FastAPI-generated OpenAPI spec for a mounted LangChain
+  runnable. LangServe adds a fixed set of paths (/invoke, /batch, /stream,
+  /stream_log, /input_schema, /output_schema) per mounted chain, and the
+  OpenAPI description references "langchain" or "langserve" in operationIds.
+severity: medium
+attack_class: EXPOSURE-AGENT-FRAMEWORK
+technique_ids: [T-1001, T-4007]
+surface_types: [http_body]
+match:
+  type: composite
+  all_of:
+    - { type: substring, contains: ["\"openapi\":"] }
+    - { type: substring, contains: ["/invoke", "/batch", "/stream"] }
+    - type: composite
+      any_of:
+        - { type: regex, pattern: '"operationId"\s*:\s*"[^"]*langserve' }
+        - { type: regex, pattern: '"operationId"\s*:\s*"invoke_[a-z0-9_-]+_invoke_post"' }
+cwe_ids: [CWE-200]
+references:
+  - https://python.langchain.com/docs/langserve/
+false_positive_notes: >
+  FastAPI projects that happen to expose /invoke, /batch, and /stream routes
+  without LangServe will not match because the second composite requires a
+  LangServe-shaped operationId. Research docs may match; scope to live
+  responses in production.
+status: draft
