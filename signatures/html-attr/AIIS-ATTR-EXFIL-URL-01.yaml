@@ -1,20 +1,31 @@
 id: AIIS-ATTR-EXFIL-URL-01
 name: Exfiltration instruction with attacker URL in attributes
-version: 0.1.0
+version: 0.2.0
 description: |
-  Detects attacker instructions asking the agent to send conversation content or
-  scraped data to an external URL, placed in HTML attributes.
+  Detects attacker instructions asking the agent to send conversation content,
+  prompts, credentials, or scraped data to an external URL, placed in HTML
+  attributes. The verb, the agent/LLM-context object, and the URL must
+  co-occur in the same fragment within ~80 characters of each other to
+  qualify — this excludes ordinary human-facing instructions like
+  "submit your application at https://..." which are not addressed to the agent.
 severity: critical
 attack_class: SKILL-EXFIL
 technique_ids: [T-2005]
 surface_types: [alt_aria, data_attr, meta_tag, html_comment]
 match:
-  type: composite
-  all_of:
-    - type: regex
-      pattern: '(?i)(send|post|submit|upload|transmit|forward|exfiltrate)\s+(this|the|all|your|user|conversation|history|context)'
-    - type: regex
-      pattern: 'https?://[a-z0-9.-]+(:\d+)?(/[^\s"]*)?'
+  type: regex
+  pattern: '(?is)(send|post|submit|upload|transmit|forward|exfiltrate|leak|deliver|relay)\s+(?:(?:this|the|all|your|every|each|any|complete|full|entire|whole)\s+){0,3}(conversation|chat\b|context\b|(?:system\s+)?prompt|api[\s_-]?key(?:s)?|secret(?:s)?|token(?:s)?|credential(?:s)?|cookie(?:s)?|session\s+token(?:s)?|(?:environment|env)\s+variable(?:s)?|memory\s+state|knowledge\s+base|conversation\s+(?:history|transcript|log|memory)|chat\s+(?:history|transcript|log|memory)|system\s+(?:message|prompt|instruction)s?|tool\s+(?:call|response|output)s?|user\s+(?:input|prompt|query|message)s?|user(?:''s)?\s+data)\b.{0,80}https?://[a-z0-9.-]+(?::\d+)?(?:/[^\s"<>'']*)?'
 cwe_ids: [CWE-200]
 hma_check_ids: [AI-WILD-005]
+false_positive_notes: >
+  v0.1.0 accepted "verb + (this|the|all|your|user|conversation|history|context)"
+  anywhere in the fragment alongside a URL, which matched ordinary human-facing
+  imperatives like "submit your application at https://..." across .gov, news,
+  job-listing, and ecommerce pages and produced ~48% of total HoneyMap surfaces
+  as FPs. v0.2.0 requires the verb, an AI/agent-context object (conversation,
+  history, context, prompt, token, secret, credential, env, tool output, user
+  input), and the URL to co-occur within ~80 characters so that human-targeted
+  CTAs do not match.
+references:
+  - https://arxiv.org/abs/2306.05499
 status: active

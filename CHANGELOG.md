@@ -1,5 +1,36 @@
 # AIIS Signatures changelog
 
+## v0.2.1 — 2026-05-11
+
+False-positive reduction in the two highest-volume seed signatures, which
+together produced ~72% of HoneyMap dashboard surfaces and were dominated by
+matches on legitimate government / education / news / docs content.
+
+**Schema changes (`aiis-v0.1.schema.json`):**
+
+- New optional `excluded_domains` field (list of host-regex patterns,
+  anchored `^...$` and case-insensitive at the engine level). When a
+  surface's source domain matches any entry, the signature is skipped for
+  that surface. Backward-compatible — existing signatures omit the field
+  and behave identically.
+
+**Signature updates (both bumped to `version: 0.2.0` internally):**
+
+- `AIIS-ATTR-EXFIL-URL-01` — replaced the broad
+  `(verb) (this|the|all|your|user|conversation|history|context) … URL` regex
+  with one that requires the verb, an unambiguous AI/agent-context object
+  (`conversation`, `chat`, `context`, `system prompt`, `api key`, `secret`,
+  `token`, `credential`, `tool call/output`, `user input/prompt/message`,
+  qualified forms like `conversation history`, …), and the URL to co-occur
+  within ~80 characters. Excludes human-targeted CTAs such as
+  "submit your application at https://…", "send all your inquiries to https://…".
+- `AIIS-HIDDEN-ROLE-INJECT-01` — added `excluded_domains` covering
+  security-research, standards, and major-vendor docs hosts (NIST, CISA,
+  MITRE, OWASP, arXiv, Anthropic, OpenAI, Wikipedia, GitHub Pages, …) that
+  routinely quote injection samples verbatim as educational content. The
+  signature's `false_positive_notes` had called for this allowlist since
+  v0.1.0; the standard now expresses it.
+
 ## v0.2.0 — 2026-04-21
 
 Introduces the `exposure` signature category alongside `injection`. Schema is

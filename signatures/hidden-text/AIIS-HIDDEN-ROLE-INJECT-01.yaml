@@ -1,6 +1,6 @@
 id: AIIS-HIDDEN-ROLE-INJECT-01
 name: Role injection via fake system marker in hidden text
-version: 0.1.0
+version: 0.2.0
 description: |
   Detects prompt injection payloads hidden in CSS-concealed text that attempt to
   impersonate a system or admin role and override the agent's instructions. The
@@ -13,11 +13,42 @@ surface_types: [hidden_text]
 match:
   type: regex
   pattern: '(?i)\[?\s*(SYSTEM|ADMIN|INST)\s*\]?.{0,200}(ignore|override|disregard|forget|reveal)'
+excluded_domains:
+  # Security/research/standards/government-info sites routinely publish
+  # injection samples verbatim as educational material. Skipping these hosts
+  # avoids matching their published example payloads as live attacks.
+  # Match is anchored on the full hostname (engine adds ^/$ during compile).
+  - '(.+\.)?nist\.gov'
+  - '(.+\.)?cisa\.gov'
+  - '(.+\.)?nsa\.gov'
+  - '(.+\.)?mitre\.org'
+  - '(.+\.)?owasp\.org'
+  - '(.+\.)?arxiv\.org'
+  - '(.+\.)?ieee\.org'
+  - '(.+\.)?acm\.org'
+  - '(.+\.)?usenix\.org'
+  - '(.+\.)?anthropic\.com'
+  - '(.+\.)?openai\.com'
+  - '(.+\.)?deepmind\.com'
+  - '(.+\.)?cloudflare\.com'
+  - '(.+\.)?microsoft\.com'
+  - '(.+\.)?google(?:blog)?\.com'
+  - '(.+\.)?github\.io'
+  - '(.+\.)?githubusercontent\.com'
+  - '(.+\.)?readthedocs\.io'
+  - '(.+\.)?stackexchange\.com'
+  - '(.+\.)?stackoverflow\.com'
+  - '(.+\.)?medium\.com'
+  - '(.+\.)?substack\.com'
+  - '(.+\.)?wikipedia\.org'
+  - '(.+\.)?wikimedia\.org'
 cwe_ids: [CWE-74]
 hma_check_ids: [AI-WILD-001]
 false_positive_notes: >
-  Security research articles quoting known injection samples may trigger. Pair
-  with a "not on security/research domain" domain-allowlist for production use.
+  Security research articles quoting known injection samples may trigger.
+  excluded_domains (v0.2.0) implements the host-allowlist this note has called
+  for since v0.1.0. Expand the list as new research / docs / standards
+  domains are observed in FP triage.
 references:
   - https://arxiv.org/abs/2306.05499
 status: active

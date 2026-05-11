@@ -114,6 +114,11 @@
     "false_positive_notes": {
       "type": "string"
     },
+    "excluded_domains": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional list of host-regex patterns (anchored ^...$ by the engine at compile time). When a surface's source domain matches any entry, the signature is skipped for that surface. Used to suppress known-research/standards/docs sites where injection samples are quoted as educational content."
+    },
     "references": {
       "type": "array",
       "items": { "type": "string", "format": "uri-reference" }
