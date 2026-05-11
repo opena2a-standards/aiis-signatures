@@ -14,10 +14,20 @@ match:
   type: regex
   pattern: '(?i)\[?\s*(SYSTEM|ADMIN|INST)\s*\]?.{0,200}(ignore|override|disregard|forget|reveal)'
 excluded_domains:
-  # Security/research/standards/government-info sites routinely publish
-  # injection samples verbatim as educational material. Skipping these hosts
-  # avoids matching their published example payloads as live attacks.
-  # Match is anchored on the full hostname (engine adds ^/$ during compile).
+  # Authoritative security/research/standards/government-info publishers
+  # that routinely quote injection samples verbatim as educational
+  # material. Match is anchored on the full hostname (engine adds ^/$
+  # during compile).
+  #
+  # IMPORTANT — multi-tenant user-content hosts are deliberately NOT
+  # in this list (github.io, githubusercontent.com, readthedocs.io,
+  # medium.com, substack.com, stack{exchange,overflow}.com, wikipedia,
+  # blogspot, etc.). Anyone can register a subdomain or upload content
+  # on those hosts, so an exclusion entry there becomes a free
+  # detection-bypass channel: attacker registers evil-research.github.io
+  # with a hidden [SYSTEM] payload and our scanner silently skips it.
+  # Add specific known-good subdomains under those hosts case by case
+  # rather than the whole tenant root.
   - '(.+\.)?nist\.gov'
   - '(.+\.)?cisa\.gov'
   - '(.+\.)?nsa\.gov'
@@ -27,21 +37,31 @@ excluded_domains:
   - '(.+\.)?ieee\.org'
   - '(.+\.)?acm\.org'
   - '(.+\.)?usenix\.org'
-  - '(.+\.)?anthropic\.com'
-  - '(.+\.)?openai\.com'
-  - '(.+\.)?deepmind\.com'
-  - '(.+\.)?cloudflare\.com'
-  - '(.+\.)?microsoft\.com'
-  - '(.+\.)?google(?:blog)?\.com'
-  - '(.+\.)?github\.io'
-  - '(.+\.)?githubusercontent\.com'
-  - '(.+\.)?readthedocs\.io'
-  - '(.+\.)?stackexchange\.com'
-  - '(.+\.)?stackoverflow\.com'
-  - '(.+\.)?medium\.com'
-  - '(.+\.)?substack\.com'
-  - '(.+\.)?wikipedia\.org'
-  - '(.+\.)?wikimedia\.org'
+  # Standards bodies — only the canonical-spec subdomain. Mailing-list
+  # archives (lists.w3.org, mailarchive.ietf.org) host user-submitted
+  # content and are NOT exempt.
+  - 'www\.w3\.org'
+  - 'www\.ietf\.org'
+  # Authoritative vendor documentation roots only — NOT the full corp
+  # domain, and NOT user-editable doc sites. developer.mozilla.org
+  # was removed: MDN accepts user-edited content. wikipedia.org and
+  # wikimedia.org were also removed — the revert window between bad
+  # edit and reversal is long enough for a crawler ingest cycle to
+  # pick up an injection sample.
+  - 'docs\.anthropic\.com'
+  - 'www\.anthropic\.com'
+  - 'platform\.openai\.com'
+  - 'help\.openai\.com'
+  - 'cookbook\.openai\.com'
+  - 'cloud\.google\.com'
+  - 'ai\.google\.dev'
+  - 'learn\.microsoft\.com'
+  - 'developers\.cloudflare\.com'
+  # Specific known-publisher subdomains on multi-tenant hosts. Add to
+  # this list when a new authoritative project is observed.
+  - 'owasp\.github\.io'
+  - 'mitre\.github\.io'
+  - 'mitre-attack\.github\.io'
 cwe_ids: [CWE-74]
 hma_check_ids: [AI-WILD-001]
 false_positive_notes: >

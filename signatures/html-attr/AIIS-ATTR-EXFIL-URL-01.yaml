@@ -13,8 +13,22 @@ attack_class: SKILL-EXFIL
 technique_ids: [T-2005]
 surface_types: [alt_aria, data_attr, meta_tag, html_comment]
 match:
-  type: regex
-  pattern: '(?is)(send|post|submit|upload|transmit|forward|exfiltrate|leak|deliver|relay)\s+(?:(?:this|the|all|your|every|each|any|complete|full|entire|whole)\s+){0,3}(conversation|chat\b|context\b|(?:system\s+)?prompt|api[\s_-]?key(?:s)?|secret(?:s)?|token(?:s)?|credential(?:s)?|cookie(?:s)?|session\s+token(?:s)?|(?:environment|env)\s+variable(?:s)?|memory\s+state|knowledge\s+base|conversation\s+(?:history|transcript|log|memory)|chat\s+(?:history|transcript|log|memory)|system\s+(?:message|prompt|instruction)s?|tool\s+(?:call|response|output)s?|user\s+(?:input|prompt|query|message)s?|user(?:''s)?\s+data)\b.{0,80}https?://[a-z0-9.-]+(?::\d+)?(?:/[^\s"<>'']*)?'
+  type: composite
+  # Verb-object phrase and URL may appear in either order. Each branch
+  # shares the same widened verb alternation and the same unambiguous
+  # AI/agent-context-or-security-critical object alternation.
+  #
+  # Object alternation deliberately omits bare ambiguous nouns
+  # (history, messages, transcript, dialogue, files, documents) which
+  # also appear in legitimate human-facing copy ("your order history",
+  # "voice messages", "academic transcript"). Those nouns are accepted
+  # only when explicitly qualified (conversation history, chat
+  # transcript, system messages, user messages, etc.).
+  any_of:
+    - type: regex
+      pattern: '(?is)\b(send|post|submit|upload|transmit|forward|exfiltrate|leak|deliver|relay|copy|share|dump|exfil|siphon)\s+(?:(?:this|the|all|your|every|each|any|complete|full|entire|whole|my|our)\s+){0,3}(conversation(?:s)?|chat(?:s)?|context|(?:system\s+)?prompt(?:s)?|api[\s_-]?key(?:s)?|secret(?:s)?|(?:access|auth(?:entication)?|bearer|refresh|id|jwt|csrf|oauth)\s+token(?:s)?|token(?:s)?|bearer(?:s)?\b|jwt(?:s)?\b|oauth\s+code(?:s)?|kerberos\s+ticket(?:s)?|saml\s+assertion(?:s)?|auth(?:orization)?\s+header(?:s)?|x[\s-][\w-]+[\s-]key\s+header(?:s)?|password(?:s)?|passphrase(?:s)?|credential(?:s)?|cookie(?:s)?|session\s+(?:id(?:s)?|cookie(?:s)?|token(?:s)?)|(?:private|ssh|gpg|signing|encryption|access)\s+key(?:s)?|recovery\s+(?:code|phrase|seed)(?:s)?|mnemonic(?:s)?|seed\s+phrase(?:s)?|(?:environment|env)\s+variable(?:s)?|memory\s+state|knowledge\s+base|conversation\s+(?:history|transcript|log|memory)|chat\s+(?:history|transcript|log|memory)|system\s+(?:message|prompt|instruction)(?:s)?|tool\s+(?:call|response|output)(?:s)?|user(?:''s)?\s+(?:input|prompt|query|message|data)(?:s)?|user(?:''s)?\s+data)\b.{0,150}https?://[a-z0-9.-]+(?::\d+)?(?:/[^\s"<>'']*)?'
+    - type: regex
+      pattern: '(?is)https?://[a-z0-9.-]+(?::\d+)?(?:/[^\s"<>'']*)?.{0,150}\b(send|post|submit|upload|transmit|forward|exfiltrate|leak|deliver|relay|copy|share|dump|exfil|siphon)\s+(?:(?:this|the|all|your|every|each|any|complete|full|entire|whole|my|our)\s+){0,3}(conversation(?:s)?|chat(?:s)?|context|(?:system\s+)?prompt(?:s)?|api[\s_-]?key(?:s)?|secret(?:s)?|(?:access|auth(?:entication)?|bearer|refresh|id|jwt|csrf|oauth)\s+token(?:s)?|token(?:s)?|bearer(?:s)?\b|jwt(?:s)?\b|oauth\s+code(?:s)?|kerberos\s+ticket(?:s)?|saml\s+assertion(?:s)?|auth(?:orization)?\s+header(?:s)?|x[\s-][\w-]+[\s-]key\s+header(?:s)?|password(?:s)?|passphrase(?:s)?|credential(?:s)?|cookie(?:s)?|session\s+(?:id(?:s)?|cookie(?:s)?|token(?:s)?)|(?:private|ssh|gpg|signing|encryption|access)\s+key(?:s)?|recovery\s+(?:code|phrase|seed)(?:s)?|mnemonic(?:s)?|seed\s+phrase(?:s)?|(?:environment|env)\s+variable(?:s)?|memory\s+state|knowledge\s+base|conversation\s+(?:history|transcript|log|memory)|chat\s+(?:history|transcript|log|memory)|system\s+(?:message|prompt|instruction)(?:s)?|tool\s+(?:call|response|output)(?:s)?|user(?:''s)?\s+(?:input|prompt|query|message|data)(?:s)?|user(?:''s)?\s+data)\b'
 cwe_ids: [CWE-200]
 hma_check_ids: [AI-WILD-005]
 false_positive_notes: >
@@ -24,8 +38,18 @@ false_positive_notes: >
   job-listing, and ecommerce pages and produced ~48% of total HoneyMap surfaces
   as FPs. v0.2.0 requires the verb, an AI/agent-context object (conversation,
   history, context, prompt, token, secret, credential, env, tool output, user
-  input), and the URL to co-occur within ~80 characters so that human-targeted
-  CTAs do not match.
+  input), and the URL to co-occur within 150 characters so that human-targeted
+  CTAs do not match. Bidirectional via composite any_of — URL may precede or
+  follow the verb-object phrase.
+  .
+  Known coverage gaps deferred to the NLM-INJ tier of the HoneyMap cascade
+  (the AIIS regex tier is intentionally English-only and lookalike-blind):
+  (a) non-English exfil verbs ("envíalo a", "送信して", "送往"); (b) zero-width
+  joiner / non-joiner insertion inside verb or object ("se‍nd the api
+  key"); (c) Cyrillic / Greek homoglyph substitution in verbs ("ѕend");
+  (d) HTML tag injection between verb and object inside the attribute value
+  ("send the<br/>api key"). Each of these matches the v0.1.0 regex no
+  better than v0.2.0 — the gap is the tier, not the bump.
 references:
   - https://arxiv.org/abs/2306.05499
 status: active
