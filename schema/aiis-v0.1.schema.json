@@ -11,6 +11,12 @@
       "pattern": "^AIIS-[A-Z0-9-]{3,}$",
       "description": "Globally unique signature ID. Convention: AIIS-<CATEGORY>-<SHORT-NAME>-<NN>"
     },
+    "category": {
+      "type": "string",
+      "enum": ["injection", "exposure"],
+      "default": "injection",
+      "description": "Signature category. 'injection' matches prompt-injection artefacts embedded in public content. 'exposure' matches evidence that a host publicly exposes an AI-agent component (banner, response shape, fingerprint). Omitted = injection for backward compatibility."
+    },
     "name": {
       "type": "string",
       "description": "Human-readable signature name."
@@ -29,7 +35,7 @@
     },
     "attack_class": {
       "type": "string",
-      "description": "OpenA2A attack class, e.g. SOUL-INJECT, UNICODE-STEGO, SKILL-EXFIL, RETROACTIVE-PRIV."
+      "description": "OpenA2A attack class. Injection: SOUL-INJECT, UNICODE-STEGO, SKILL-EXFIL, RETROACTIVE-PRIV. Exposure: EXPOSURE-MCP-SERVER, EXPOSURE-LLM-GATEWAY, EXPOSURE-SELFHOSTED-LLM, EXPOSURE-AGENT-FRAMEWORK, EXPOSURE-RAG-SERVICE, EXPOSURE-AI-COPILOT, EXPOSURE-VECTOR-DB, EXPOSURE-TOOL-REGISTRY, EXPOSURE-AUTH-MISCONFIG, EXPOSURE-VERSION-DRIFT."
     },
     "technique_ids": {
       "type": "array",
@@ -44,7 +50,8 @@
         "enum": [
           "hidden_text", "html_comment", "meta_tag", "json_ld", "robots_llms",
           "alt_aria", "open_graph", "noscript", "http_header", "inline_style",
-          "script_literal", "data_attr"
+          "script_literal", "data_attr",
+          "http_body", "tls_cert"
         ]
       }
     },

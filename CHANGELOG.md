@@ -1,5 +1,36 @@
 # AIIS Signatures changelog
 
+## v0.2.0 — 2026-04-21
+
+Introduces the `exposure` signature category alongside `injection`. Schema is
+backward-compatible: signatures without an explicit `category` default to
+`injection`.
+
+**Schema changes (`aiis-v0.1.schema.json`):**
+
+- New `category` field, enum `["injection", "exposure"]`, default `"injection"`.
+- `surface_types` enum extended with `http_body` and `tls_cert` to support
+  fingerprint matching against live service responses.
+
+**New seed signatures (8, all `status: draft` pending review):**
+
+- `AIIS-EXPOSURE-OLLAMA-TAGS-01` — Ollama `/api/tags` listing
+- `AIIS-EXPOSURE-OLLAMA-VERSION-01` — Ollama `/api/version` response
+- `AIIS-EXPOSURE-VLLM-MODELS-01` — vLLM OpenAI-compatible `/v1/models` with `owned_by:"vllm"`
+- `AIIS-EXPOSURE-LITELLM-MODELS-01` — LiteLLM proxy `litellm_params` / `healthy_endpoints`
+- `AIIS-EXPOSURE-MCP-JSONRPC-01` — MCP server `tools/list` / `resources/list` response
+- `AIIS-EXPOSURE-LANGSERVE-ROUTES-01` — LangServe runnable OpenAPI spec
+- `AIIS-EXPOSURE-CHROMA-HEARTBEAT-01` — Chroma `/api/v1/heartbeat`
+- `AIIS-EXPOSURE-QDRANT-ROOT-01` — Qdrant `/` root response
+
+**Pending follow-on seeds (exposure subclasses not covered in v0.2.0):**
+
+- `EXPOSURE-RAG-SERVICE` — Haystack, RAGFlow
+- `EXPOSURE-AI-COPILOT` — self-hosted Copilot-style proxies
+- `EXPOSURE-TOOL-REGISTRY` — MCP catalogues, tool registries
+- `EXPOSURE-AUTH-MISCONFIG` — unauthenticated admin/management endpoints
+- `EXPOSURE-VERSION-DRIFT` — per-CVE matchers, populated from vulnerability data
+
 ## v0.1.0 — 2026-04-14
 
 Initial public release. 10 seed signatures across 6 surface types:

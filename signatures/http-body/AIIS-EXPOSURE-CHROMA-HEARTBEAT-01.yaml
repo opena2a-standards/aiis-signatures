@@ -1,0 +1,22 @@
+id: AIIS-EXPOSURE-CHROMA-HEARTBEAT-01
+category: exposure
+name: Exposed Chroma vector database heartbeat
+version: 0.1.0
+description: |
+  Detects the response from Chroma's GET /api/v1/heartbeat endpoint. Chroma
+  returns a single JSON object with a nanosecond-precision timestamp under
+  the key "nanosecond heartbeat".
+severity: medium
+attack_class: EXPOSURE-VECTOR-DB
+technique_ids: [T-1001]
+surface_types: [http_body]
+match:
+  type: regex
+  pattern: '\{\s*"nanosecond heartbeat"\s*:\s*\d{18,}\s*\}'
+cwe_ids: [CWE-200]
+references:
+  - https://docs.trychroma.com/deployment/thin-client
+false_positive_notes: >
+  Very low. The exact key "nanosecond heartbeat" (with the space) is
+  Chroma-specific.
+status: draft

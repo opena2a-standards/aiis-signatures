@@ -1,0 +1,23 @@
+id: AIIS-EXPOSURE-OLLAMA-VERSION-01
+category: exposure
+name: Exposed Ollama version endpoint
+version: 0.1.0
+description: |
+  Detects the minimal JSON response returned by Ollama's GET /api/version
+  endpoint: a single-key object mapping "version" to a semver string.
+  Used as a low-overhead liveness probe for Ollama hosts.
+severity: low
+attack_class: EXPOSURE-SELFHOSTED-LLM
+technique_ids: [T-1001]
+surface_types: [http_body]
+match:
+  type: regex
+  pattern: '^\s*\{\s*"version"\s*:\s*"\d+\.\d+\.\d+[^"]*"\s*\}\s*$'
+cwe_ids: [CWE-200]
+references:
+  - https://github.com/ollama/ollama/blob/main/docs/api.md
+false_positive_notes: >
+  Other single-key version responses may match this shape. Pair with a path
+  probe to /api/version or with AIIS-EXPOSURE-OLLAMA-TAGS-01 on the same host
+  to raise confidence.
+status: draft

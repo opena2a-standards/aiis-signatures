@@ -1,0 +1,24 @@
+id: AIIS-EXPOSURE-VLLM-MODELS-01
+category: exposure
+name: Exposed vLLM model listing
+version: 0.1.0
+description: |
+  Detects vLLM's OpenAI-compatible GET /v1/models response. vLLM reports
+  owned_by="vllm" for served models, which is a reliable fingerprint
+  distinguishing it from generic OpenAI-compatible servers.
+severity: medium
+attack_class: EXPOSURE-SELFHOSTED-LLM
+technique_ids: [T-1001, T-4007, T-7007]
+surface_types: [http_body]
+match:
+  type: composite
+  all_of:
+    - { type: substring, contains: ["\"object\":\"list\""] }
+    - { type: substring, contains: ["\"object\":\"model\""] }
+    - { type: substring, contains: ["\"owned_by\":\"vllm\""] }
+cwe_ids: [CWE-200]
+references:
+  - https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html
+false_positive_notes: >
+  Very low. "owned_by":"vllm" is a vLLM-internal attribution string.
+status: draft
