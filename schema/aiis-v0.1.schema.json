@@ -89,7 +89,12 @@
                 "required": ["from", "to"]
               }
             },
-            "min_matches": { "type": "integer", "minimum": 1, "default": 1 }
+            "min_matches": { "type": "integer", "minimum": 1, "default": 1 },
+            "exclude_emoji_tag_flags": {
+              "type": "boolean",
+              "default": false,
+              "description": "When true, well-formed regional-indicator flag emoji (U+1F3F4 base + Tag characters + U+E007F terminator) are removed before counting Tag-block characters, so legitimate flags are not read as steganographic injection."
+            }
           },
           "required": ["ranges"]
         },

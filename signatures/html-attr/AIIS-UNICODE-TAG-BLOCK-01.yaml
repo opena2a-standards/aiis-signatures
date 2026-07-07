@@ -1,10 +1,16 @@
 id: AIIS-UNICODE-TAG-BLOCK-01
 name: Unicode Tag block (U+E0000–U+E007F) steganographic injection
-version: 0.1.0
+version: 0.2.0
 description: |
   Detects use of the Unicode Tag block (U+E0000 to U+E007F), which is invisible
   to humans but preserved by tokenizers. Commonly used to smuggle instructions
   past content filters while still being read by an LLM.
+
+  exclude_emoji_tag_flags drops well-formed regional-indicator flag emoji
+  (U+1F3F4 base + Tag characters + U+E007F terminator, e.g. 🏴󠁧󠁢󠁥󠁮󠁧󠁿 England) before
+  counting. Those flags are the one legitimate use of the Tag block on the open
+  web and are not injection; a real payload carries bare Tag characters that are
+  not wrapped in a well-formed flag sequence and still matches.
 severity: high
 attack_class: UNICODE-STEGO
 technique_ids: [T-2004]
@@ -14,6 +20,7 @@ match:
   ranges:
     - { from: "\U000E0000", to: "\U000E007F" }
   min_matches: 3
+  exclude_emoji_tag_flags: true
 cwe_ids: [CWE-116]
 hma_check_ids: [AI-WILD-008]
 status: active
