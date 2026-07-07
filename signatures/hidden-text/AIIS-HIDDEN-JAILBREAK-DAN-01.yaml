@@ -1,16 +1,66 @@
 id: AIIS-HIDDEN-JAILBREAK-DAN-01
 name: DAN-family jailbreak prompt in hidden text
-version: 0.1.0
+version: 0.2.0
 description: |
   Detects DAN ("Do Anything Now") and adjacent jailbreak patterns in hidden text.
   These payloads try to frame the agent as a fictional unbounded assistant.
+
+  v0.2.0 requires unambiguous AI-injection context. The v0.1.0 pattern
+  alternated on bare `developer mode`, bare `jailbreak`, and bare `DAN mode`,
+  which matched benign content that has nothing to do with prompt injection:
+  iOS/Android "developer mode" UI strings and WordPress plugin debug output
+  ("Developer mode initialization; Version: 1.2.9"), iPhone "jailbreak"
+  tutorials, and cross-language substrings where `dan mode` appears inside a
+  word ("dan modern" — Indonesian "and modern"; "nedan modereras" — Swedish
+  "below is moderated"). The bare branches are dropped; every surviving branch
+  requires explicit jailbreak framing:
+    - do-anything-now, "you are now DAN/unrestricted/jailbroken", act-as-DAN;
+    - `developer/DAN mode enabled|activated` followed by AI context;
+    - `DAN mode` GATED ON A LEADING CUE — "you are (now) in DAN mode", or
+      enter/activate/stay in/remain in/in DAN mode — so that gaming and
+      martial-arts uses ("Dan mode is unlocked in Street Fighter", "3rd dan
+      mode selected in the karate bracket") and the "Sudan"/"dan modern"/
+      "nedan modereras" substrings do not match. The prior bare `\bdan\s+mode\b`
+      branch was dropped;
+    - `jailbreak(ing)` + an AI/agent object — the object list is explicit
+      ({ai,assistant,agent,`system prompt`,model,bot,llm,chatbot,prompt,gpt,
+      chatgpt,claude,gemini,guardrails,filters,rules,restrictions,safety}). The
+      object is `system prompt`, NOT bare `system`, so
+      "jailbreak the agent/system prompt/ChatGPT/your guardrails" match but
+      device-jailbreak articles ("to jailbreak the system you first unlock the
+      bootloader") and "jailbreak your iPhone" do not;
+    - special-instructions-for-the-AI;
+    - ignore/disregard/forget {previous,prior,above,following,earlier}
+      {instructions,prompts,rules,directions} (optionally + an action verb).
+
+  Precision/recall note: this is a high-confidence regex tier and the FIRST
+  gate in HoneyMap's classifier — a surface the pattern does not match is never
+  recorded in the census. There is no post-hoc reasoning tier that recovers a
+  missed surface (the Cartographer adjudicator scores already-matched rows
+  only). The pattern therefore errs toward explicit framing; delimiter-free
+  single-token jailbreak mentions are a known, documented recall limitation of
+  the census, not a silently-backstopped gap.
 severity: high
 attack_class: SOUL-INJECT
 technique_ids: [T-2003]
 surface_types: [hidden_text, html_comment]
 match:
   type: regex
-  pattern: '(?i)(do\s+anything\s+now|DAN\s+mode|jailbreak|developer\s+mode|pretend\s+(you|to\s+be)\s+(are\s+)?(an?\s+)?(AI|assistant)\s+(that|which|who)\s+(can|will|has\s+no))'
+  pattern: '(?i)(do\s+anything\s+now|you\s+are\s+(now\s+)?(a\s+)?(dan|unrestricted|jailbroken|an\s+ai\s+(with\s+no|that\s+can))|act\s+as\s+(a\s+)?(dan|jailbroken|an\s+unrestricted)|(dan|developer)\s+mode\s+(enabled|activated)[,.:; ].{0,80}(ai|assistant|instruction|you\s+(are|will|must|can)|ignore|no\s+restriction)|(you\s+are\s+(now\s+)?in\s+|(enter|activate|stay\s+in|remain\s+in|in)\s+)dan\s+mode\b|pretend\s+(you|to\s+be)\s+(are\s+)?(an?\s+)?(ai|assistant)\s+(that|which|who)\s+(can|will|has\s+no)|jailbreak(ing)?\s+(the\s+|your\s+|this\s+)?(ai|assistant|agent|system\s+prompt|model|bot|llm|chatbot|prompt|gpt|chatgpt|claude|gemini|guardrails?|filters?|rules?|restrictions?|safety)|special\s+instructions?\s+(from|for)\s+the\s+(ai|developer\s+of\s+the\s+ai)|(ignore|disregard|forget)\s+(all\s+)?(the\s+)?(previous|prior|above|following|earlier)\s+(instructions?|prompts?|rules?|directions?)(\s+and\s+(act|respond|pretend|reveal|do|output|say|follow|print|execute|comply|instead|send))?)'
 cwe_ids: [CWE-693]
 hma_check_ids: [AI-WILD-003]
+false_positive_notes: >
+  v0.1.0 was dominated by bare-token false positives (developer-mode UI strings,
+  iPhone jailbreak articles, "dan modern"/"nedan modereras" cross-language
+  substrings). v0.2.0 removes the bare `developer mode` / `jailbreak` / `DAN mode`
+  branches and requires explicit AI-injection context. The `jailbreak` branch
+  takes `system prompt` (not bare `system`) in its object list, so device
+  articles like "to jailbreak the system you first unlock the bootloader" and
+  "jailbreak your iPhone" do not match; the `DAN mode` branch is gated on a
+  leading cue ("you are in DAN mode", "stay in DAN mode"), so the Street-Fighter
+  "Dan mode is unlocked" and karate "3rd dan mode" uses, plus "Sudan" and
+  "nedan modereras", do not match. Fixtures with the representative FP and real
+  cases are in tests/fixtures/.
+references:
+  - https://arxiv.org/abs/2308.03825
 status: active

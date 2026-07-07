@@ -1,5 +1,100 @@
 # AIIS Signatures changelog
 
+## v0.3.0 — 2026-07-07
+
+Precision fixes in the two highest-volume hidden-text signatures (DAN and
+role-injection), plus the regional-flag-emoji exclusion for the Unicode Tag-block
+signature. Adds a `tests/fixtures/` corpus (representative false-positive and
+real cases per signature) exercised by the HoneyMap reference implementation.
+
+**Schema changes (`aiis-v0.1.schema.json`):**
+
+- New optional `exclude_emoji_tag_flags` boolean on `unicode_range` matches. When
+  true, well-formed regional-indicator flag emoji (U+1F3F4 base + Tag characters
+  + U+E007F terminator) are stripped before counting Tag-block characters.
+  Backward-compatible — omitted defaults to `false`.
+
+**Signature updates:**
+
+- `AIIS-HIDDEN-JAILBREAK-DAN-01` (`0.1.0` → `0.2.0`) — requires unambiguous
+  AI-injection framing. The v0.1.0 pattern alternated on bare `developer mode`,
+  bare `jailbreak`, and bare `DAN mode`, which matched benign content unrelated
+  to prompt injection: OS "developer mode" UI strings and WordPress plugin debug
+  output ("Developer mode initialization; Version: 1.2.9"), iPhone "jailbreak"
+  tutorials, and cross-language substrings where `dan mode` appears inside a word
+  ("dan modern" — Indonesian "and modern"; "nedan modereras" — Swedish "below is
+  moderated"). The bare branches are dropped; every surviving branch requires
+  explicit framing. The `jailbreak` branch takes an explicit AI/agent object
+  (`ai|assistant|agent|system prompt|model|bot|llm|chatbot|prompt|gpt|chatgpt|
+  claude|gemini|guardrails|filters|rules|restrictions|safety`) — the object is
+  `system prompt`, not bare `system`, so "jailbreak the agent / the system
+  prompt / ChatGPT / your guardrails" match but "jailbreak your iPhone" and
+  device articles ("to jailbreak the system you first unlock the bootloader") do
+  not; the `DAN mode` branch is gated on a leading cue ("you are (now) in DAN
+  mode", enter/activate/stay in/remain in DAN mode) so gaming and martial-arts
+  uses ("Dan mode is unlocked in Street Fighter", "3rd dan mode" in a karate
+  bracket) and "Sudan"/"nedan modereras" do not match; and the
+  ignore/disregard/forget-instructions family covers previous/prior/above/
+  following/earlier targets. Recall is deliberately bounded to explicit framing —
+  a single-token, delimiter-free jailbreak mention is a known, documented recall
+  limitation of the census, not a silently-backstopped gap (the reference
+  scanner has no post-hoc tier that recovers a surface the pattern did not
+  match).
+
+- `AIIS-HIDDEN-ROLE-INJECT-01` (`0.2.0` → `0.3.0`) — requires an injection
+  DELIMITER around the role word. The v0.2.0 pattern made the brackets optional
+  (`\[? … \]?`), so a bare role word anywhere in prose matched — most
+  destructively `INST` inside "instructions" ("further instructions. Don't forget
+  to override the defaults") — and quote-wrapped roles in serialized data (Redux
+  `window.__INITIAL_STATE__` dumps, consent JSON: `"system"`, `["system","user"]`)
+  matched too. Rather than requiring square brackets specifically (which would
+  also drop the common non-`[…]` markers `System:`, `<system>`, `{{system}}`,
+  `Admin:` — all real injection forms), a match now requires one of two shapes:
+  (a) the role word wrapped in a MATCHED injection delimiter — both opening and
+  closing present and adjacent: a bracket (`[system]`), an angle/ChatML tag
+  (`<system>`, `</system>`, `<|system|>`), or a brace (`{system}`, `{{system}}`)
+  — then an override verb within 200 chars; or (b) a start- or
+  whitespace-anchored `role:` directive with the override verb within a tight
+  12-char window. The delimiter set excludes the double-quote (so JSON/Redux
+  roles stay out) and the directive anchor is start-or-whitespace (so
+  `subsystem:`/`filesystem:`/`ecosystem:` stay out). Requiring a MATCHED (not
+  lone or optional) delimiter — no bare `{`, `#`, or markdown-heading shape —
+  additionally keeps out benign markdown headings (`## Instructions … override`),
+  JS/JSON object literals (`{ user: 'bob' } … override`), and role words that are
+  only substrings (`user` in "Username"). The role vocabulary is the full
+  ChatML/OpenAI set and the verb set adds `bypass`, `you must`, `do not tell`.
+  `excluded_domains` is unchanged.
+
+- `AIIS-UNICODE-TAG-BLOCK-01` (`0.1.0` → `0.2.0`) — enables
+  `exclude_emoji_tag_flags`. Regional flag emoji (England, Scotland, Wales) are
+  legitimately encoded with Tag characters and were matched as steganographic
+  injection. The reference matcher strips ONLY the three RGI-valid flag bodies
+  (`gbeng`/`gbsct`/`gbwls`); any other base…Tag…terminator sequence — including an
+  attacker hiding a tag-encoded payload behind a flag wrapper, or splitting one
+  across several short wrappers — is retained and counted. A real payload carrying
+  bare Tag characters (with or without a flag alongside) still matches, and a
+  malformed flag (base with Tag characters but no terminator) is still counted.
+
+**Test fixtures (`tests/fixtures/<SIGNATURE-ID>.json`):**
+
+- New per-signature `shouldMatch` / `shouldNotMatch` corpora for the three
+  updated signatures. Text cases carry the string directly; Unicode cases carry
+  hex `codepoints` to avoid embedding invisible Tag characters in the repo. The
+  HoneyMap reference implementation loads these and asserts each signature's
+  matcher agrees with the fixture, so the format has an executable conformance
+  check even though this repo ships no runner of its own.
+
+**Tooling / CI:**
+
+- Adds `.github/workflows/validate.yml` and a self-contained, stdlib-only
+  validator (`tests/validate/`). On every push and pull request it compiles
+  every signature `pattern` with Go RE2 (the same engine HoneyMap uses) and runs
+  the plain-text fixtures against the compiled pattern, so a malformed pattern or
+  a detection regression is caught in this repo — previously there was no CI at
+  all. Codepoint-based (Unicode Tag) fixtures are exercised by HoneyMap's own
+  test suite, which now checks this repo out as a sibling so those tests run
+  instead of skipping.
+
 ## v0.2.1 — 2026-05-11
 
 False-positive reduction in the two highest-volume seed signatures, which
