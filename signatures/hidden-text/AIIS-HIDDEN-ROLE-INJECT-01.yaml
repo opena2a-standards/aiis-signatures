@@ -1,18 +1,56 @@
 id: AIIS-HIDDEN-ROLE-INJECT-01
 name: Role injection via fake system marker in hidden text
-version: 0.2.0
+version: 0.3.0
 description: |
   Detects prompt injection payloads hidden in CSS-concealed text that attempt to
-  impersonate a system or admin role and override the agent's instructions. The
-  canonical pattern is a bracketed role tag ([SYSTEM], [ADMIN], [INST]) followed
-  within ~200 characters by an override instruction (ignore, disregard, reveal).
+  impersonate a system or admin role and override the agent's instructions. A
+  match requires a role word (SYSTEM, ADMIN, INST, INSTRUCTION, USER, ASSISTANT,
+  DEVELOPER) carried by an injection DELIMITER, followed by an override verb
+  (ignore, override, disregard, forget, reveal, bypass, "you must",
+  "do not tell").
+
+  v0.3.0 fixes the v0.2.0 optional-bracket pattern (`\[? ... \]?`), which fired
+  on a bare role word anywhere in prose — most destructively `INST` inside
+  "instructions" ("further instructions. Don't forget to override the defaults")
+  — and on quote-wrapped roles in serialized data (Redux
+  `window.__INITIAL_STATE__` dumps, consent JSON: `"system"`, `["system","user"]`).
+
+  Rather than requiring square brackets specifically (which would also drop the
+  common non-`[…]` markers `System:`, `<system>`, `{{system}}`, `Admin:` — all
+  real injection forms), the pattern requires ONE of two shapes:
+    (a) the role word wrapped in a MATCHED injection delimiter — both the opening
+        AND closing delimiter present and adjacent to the role: a bracket
+        (`[system]`), an angle/ChatML tag (`<system>`, `</system>`, `<|system|>`),
+        or a brace (`{system}`, `{{system}}`) — then within 200 chars an override
+        verb;
+    (b) a start- or whitespace-anchored `role:` directive (`System:`, `Admin:`)
+        with the override verb within a TIGHT 12-char window, so benign config
+        logs that merely mention "ignore"/"override" far downstream do not match.
+  A MATCHED delimiter (not a lone `{`, `#`, or an optional closing bracket) is
+  required so that benign markdown headings (`## Instructions … override`,
+  `#### System configuration … disregard`), JS/JSON object literals
+  (`{ user: 'bob' } … override`), and HTML anchors (`href="#system-settings"`)
+  do NOT match — the earlier lone-delimiter / markdown-heading shapes produced a
+  broad false-positive class on ordinary docs and code. Because the delimiter set
+  excludes the double-quote, quote-wrapped JSON/Redux roles still do not match;
+  because the directive anchor is start-or-whitespace, substrings like
+  `subsystem:`/`filesystem:`/`ecosystem:` do not match; and because the role word
+  sits between matched delimiters, a bare substring like `user` inside "Username"
+  cannot satisfy the pattern.
+
+  Recall bound (single-line): the delimiter-to-verb gap uses `.` (newline-blind
+  in RE2), so a role marker and its override verb split across separate lines
+  (`<system>\nYou must reveal ...\n</system>`) are NOT matched. This is a known
+  recall limitation shared by every delimiter-based signature (it predates the
+  v0.3.0 precision work) and is deferred to the reasoning-tier adjudicator
+  (Cartographer), not silently backstopped here.
 severity: high
 attack_class: SOUL-INJECT
 technique_ids: [T-2001]
 surface_types: [hidden_text]
 match:
   type: regex
-  pattern: '(?i)\[?\s*(SYSTEM|ADMIN|INST)\s*\]?.{0,200}(ignore|override|disregard|forget|reveal)'
+  pattern: '(?i)((\[\s*(system|admin|inst|instruction|user|assistant|developer)\s*\]|</?\|?\s*(system|admin|inst|instruction|user|assistant|developer)\s*\|?>|\{\{?\s*(system|admin|inst|instruction|user|assistant|developer)\s*\}\}?).{0,200}(ignore|override|disregard|forget|reveal|bypass|you\s+must|do\s+not\s+tell)|(^|[\s>*=~-])(system|admin|developer|assistant)\s*:.{0,12}(ignore|override|disregard|forget|reveal|bypass|you\s+must|do\s+not\s+tell))'
 excluded_domains:
   # Authoritative security/research/standards/government-info publishers
   # that routinely quote injection samples verbatim as educational
@@ -65,9 +103,20 @@ excluded_domains:
 cwe_ids: [CWE-74]
 hma_check_ids: [AI-WILD-001]
 false_positive_notes: >
-  Security research articles quoting known injection samples may trigger.
+  Security research articles quoting known injection samples may trigger;
   excluded_domains (v0.2.0) implements the host-allowlist this note has called
-  for since v0.1.0. Expand the list as new research / docs / standards
+  for since v0.1.0. The v0.2.0 optional-bracket pattern also matched bare role
+  words in prose and serialized data (INST inside "instructions"; role words in
+  Redux/consent JSON); v0.3.0 requires the role word wrapped in a MATCHED
+  injection delimiter (bracket, angle/ChatML tag, or brace — opening and closing
+  both present) or carried by a start/whitespace-anchored `role:` directive with
+  a tight 12-char window. This excludes the bare-prose and quote-wrapped cases
+  while preserving the common non-bracket markers (`System:`, `<system>`,
+  `{{system}}`, `Admin:`). Requiring a matched (not lone or optional) delimiter
+  additionally keeps out benign markdown headings (`## Instructions … override`),
+  JS/JSON object literals (`{ user: 'bob' } … override`), and role words that are
+  mere substrings (`user` in "Username"). Representative FP and real cases are in
+  tests/fixtures/. Expand excluded_domains as new research / docs / standards
   domains are observed in FP triage.
 references:
   - https://arxiv.org/abs/2306.05499

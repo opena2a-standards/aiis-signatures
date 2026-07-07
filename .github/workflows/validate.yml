@@ -1,0 +1,25 @@
+name: Validate signatures
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Compile patterns + run fixtures
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+      # Self-contained (stdlib-only, no network): compiles every signature
+      # pattern with Go RE2 and runs the plain-text fixtures. Codepoint-based
+      # fixtures are exercised by the HoneyMap reference matcher's test suite.
+      - name: Validate
+        working-directory: tests/validate
+        run: go run .
