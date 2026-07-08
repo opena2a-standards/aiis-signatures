@@ -1,0 +1,19 @@
+# aiis-signatures is a security-signature CORPUS. Every file under signatures/ is a
+# detection PATTERN: it definitionally contains the injection / role-inject / stego /
+# exfil strings it is meant to detect, and tests/fixtures/ holds verbatim attack
+# samples. Running a scanner (HackMyAgent) over this repo therefore flags the signature
+# and fixture content as the very attacks it catches -- the test/-playground
+# false-positive class. Suppress those paths so scanner noise does not mask a genuine
+# finding elsewhere. Non-signature code (tests/validate/, schema/, .github/) stays fully
+# scanned.
+#
+# Format (HackMyAgent): a bare line is a path prefix; a !-prefixed line is a check-ID
+# pattern (exact or trailing *). Comments start with #.
+
+signatures/
+tests/fixtures/
+
+# The CHANGELOG documents attack techniques with verbatim samples (e.g. a zero-width-
+# joiner evasion example under v0.2.1), so it intentionally carries invisible /
+# adversarial codepoints that the unicode-stego checks flag.
+CHANGELOG.md
