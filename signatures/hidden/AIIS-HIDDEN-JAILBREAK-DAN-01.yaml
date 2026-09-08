@@ -1,6 +1,8 @@
+schema_version: "0.2"
 id: AIIS-HIDDEN-JAILBREAK-DAN-01
+category: injection
 name: DAN-family jailbreak prompt in hidden text
-version: 0.2.0
+version: 0.2.1
 description: |
   Detects DAN ("Do Anything Now") and adjacent jailbreak patterns in hidden text.
   These payloads try to frame the agent as a fictional unbounded assistant.
@@ -41,14 +43,16 @@ description: |
   single-token jailbreak mentions are a known, documented recall limitation of
   the census, not a silently-backstopped gap.
 severity: high
-attack_class: SOUL-INJECT
-technique_ids: [T-2003]
+technique_id: T-2003
+related_technique_ids: [T-2001]
+attack_vector: SOUL-INJECT
+attack_class: injection
 surface_types: [hidden_text, html_comment]
 match:
   type: regex
   pattern: '(?i)(do\s+anything\s+now|you\s+are\s+(now\s+)?(a\s+)?(dan|unrestricted|jailbroken|an\s+ai\s+(with\s+no|that\s+can))|act\s+as\s+(a\s+)?(dan|jailbroken|an\s+unrestricted)|(dan|developer)\s+mode\s+(enabled|activated)[,.:; ].{0,80}(ai|assistant|instruction|you\s+(are|will|must|can)|ignore|no\s+restriction)|(you\s+are\s+(now\s+)?in\s+|(enter|activate|stay\s+in|remain\s+in|in)\s+)dan\s+mode\b|pretend\s+(you|to\s+be)\s+(are\s+)?(an?\s+)?(ai|assistant)\s+(that|which|who)\s+(can|will|has\s+no)|jailbreak(ing)?\s+(the\s+|your\s+|this\s+)?(ai|assistant|agent|system\s+prompt|model|bot|llm|chatbot|prompt|gpt|chatgpt|claude|gemini|guardrails?|filters?|rules?|restrictions?|safety)|special\s+instructions?\s+(from|for)\s+the\s+(ai|developer\s+of\s+the\s+ai)|(ignore|disregard|forget)\s+(all\s+)?(the\s+)?(previous|prior|above|following|earlier)\s+(instructions?|prompts?|rules?|directions?)(\s+and\s+(act|respond|pretend|reveal|do|output|say|follow|print|execute|comply|instead|send))?)'
 cwe_ids: [CWE-693]
-hma_check_ids: [AI-WILD-003]
+hma_check_ids: []
 false_positive_notes: >
   v0.1.0 was dominated by bare-token false positives (developer-mode UI strings,
   iPhone jailbreak articles, "dan modern"/"nedan modereras" cross-language
@@ -63,4 +67,8 @@ false_positive_notes: >
   cases are in tests/fixtures/.
 references:
   - https://arxiv.org/abs/2308.03825
+provenance:
+  evidence_tier: observed
+  source: https://arxiv.org/abs/2308.03825
+  first_seen: "2026-04-15"
 status: active

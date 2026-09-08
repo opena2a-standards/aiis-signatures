@@ -1,6 +1,8 @@
+schema_version: "0.2"
 id: AIIS-HIDDEN-ROLE-INJECT-01
+category: injection
 name: Role injection via fake system marker in hidden text
-version: 0.3.0
+version: 0.3.1
 description: |
   Detects prompt injection payloads hidden in CSS-concealed text that attempt to
   impersonate a system or admin role and override the agent's instructions. A
@@ -45,8 +47,10 @@ description: |
   v0.3.0 precision work) and is deferred to the reasoning-tier adjudicator
   (Cartographer), not silently backstopped here.
 severity: high
-attack_class: SOUL-INJECT
-technique_ids: [T-2001]
+technique_id: T-2001
+related_technique_ids: [T-2008]
+attack_vector: SOUL-INJECT
+attack_class: injection
 surface_types: [hidden_text]
 match:
   type: regex
@@ -101,7 +105,7 @@ excluded_domains:
   - 'mitre\.github\.io'
   - 'mitre-attack\.github\.io'
 cwe_ids: [CWE-74]
-hma_check_ids: [AI-WILD-001]
+hma_check_ids: []
 false_positive_notes: >
   Security research articles quoting known injection samples may trigger;
   excluded_domains (v0.2.0) implements the host-allowlist this note has called
@@ -120,4 +124,8 @@ false_positive_notes: >
   domains are observed in FP triage.
 references:
   - https://arxiv.org/abs/2306.05499
+provenance:
+  evidence_tier: validated
+  source: https://arxiv.org/abs/2306.05499
+  first_seen: "2026-05-12"
 status: active

@@ -1,15 +1,18 @@
+schema_version: "0.2"
 id: AIIS-EXPOSURE-MCP-JSONRPC-01
 category: exposure
 name: Exposed MCP server tools/list response
-version: 0.1.0
+version: 0.1.1
 description: |
   Detects an MCP (Model Context Protocol) server's response to tools/list or
   resources/list. MCP uses JSON-RPC 2.0 with a fixed result envelope containing
   a "tools" or "resources" array whose elements carry "inputSchema" / "uri"
   fields specific to the MCP specification.
 severity: high
-attack_class: EXPOSURE-MCP-SERVER
-technique_ids: [T-1001, T-4007]
+technique_id: T-1002
+related_technique_ids: []
+attack_vector: MCP-EXPLOIT
+exposure_class: EXPOSURE-MCP-SERVER
 surface_types: [http_body]
 match:
   type: composite
@@ -20,6 +23,7 @@ match:
         - { type: regex, pattern: '"tools"\s*:\s*\[[^\]]*"inputSchema"' }
         - { type: regex, pattern: '"resources"\s*:\s*\[[^\]]*"uri"\s*:' }
 cwe_ids: [CWE-200, CWE-284]
+hma_check_ids: []
 references:
   - https://modelcontextprotocol.io/specification
 false_positive_notes: >
@@ -27,4 +31,7 @@ false_positive_notes: >
   "inputSchema" (tools) or "uri" (resources) to distinguish MCP from other
   JSON-RPC endpoints. Research articles quoting MCP responses will match;
   pair with a domain filter in production.
+provenance:
+  evidence_tier: adapted
+  source: https://modelcontextprotocol.io/specification
 status: draft

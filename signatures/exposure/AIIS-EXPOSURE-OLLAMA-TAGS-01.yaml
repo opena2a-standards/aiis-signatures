@@ -1,15 +1,18 @@
+schema_version: "0.2"
 id: AIIS-EXPOSURE-OLLAMA-TAGS-01
 category: exposure
 name: Exposed Ollama model listing
-version: 0.1.0
+version: 0.1.1
 description: |
   Detects the JSON response shape returned by Ollama's GET /api/tags endpoint,
   which lists locally pulled models together with their digest, size, and
   quantization details. An unauthenticated response at this path indicates a
   publicly reachable self-hosted LLM server.
 severity: medium
-attack_class: EXPOSURE-SELFHOSTED-LLM
-technique_ids: [T-1001, T-4007, T-7007]
+technique_id: T-1001
+related_technique_ids: []
+attack_vector: LLM-EXPOSE
+exposure_class: EXPOSURE-SELFHOSTED-LLM
 surface_types: [http_body]
 match:
   type: composite
@@ -18,9 +21,13 @@ match:
     - { type: substring, contains: ["\"digest\":\"sha256:"] }
     - { type: substring, contains: ["\"parameter_size\":"] }
 cwe_ids: [CWE-200]
+hma_check_ids: [LLM-001]
 references:
   - https://github.com/ollama/ollama/blob/main/docs/api.md
 false_positive_notes: >
   Very low. The combination of "models", sha256 digests, and Ollama-specific
   "parameter_size" / "quantization_level" keys is internal to Ollama.
+provenance:
+  evidence_tier: adapted
+  source: https://github.com/ollama/ollama/blob/main/docs/api.md
 status: draft

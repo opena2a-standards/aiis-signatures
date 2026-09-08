@@ -1,14 +1,16 @@
+schema_version: "0.2"
 id: AIIS-EXPOSURE-QDRANT-ROOT-01
 category: exposure
 name: Exposed Qdrant vector database root
-version: 0.1.0
+version: 0.1.1
 description: |
   Detects the response from Qdrant's GET / endpoint. Qdrant returns a fixed
   title string identifying itself as a vector search engine alongside its
   version.
 severity: medium
-attack_class: EXPOSURE-VECTOR-DB
-technique_ids: [T-1001]
+technique_id: T-1001
+related_technique_ids: []
+exposure_class: EXPOSURE-VECTOR-DB
 surface_types: [http_body]
 match:
   type: composite
@@ -16,9 +18,13 @@ match:
     - { type: substring, contains: ["\"title\":\"qdrant"] }
     - { type: substring, contains: ["vector search engine"] }
 cwe_ids: [CWE-200]
+hma_check_ids: []
 references:
   - https://qdrant.tech/documentation/
 false_positive_notes: >
   Very low. The fixed "qdrant - vector search engine" title is unique to
   the Qdrant root response.
+provenance:
+  evidence_tier: adapted
+  source: https://qdrant.tech/documentation/
 status: draft
