@@ -1,0 +1,84 @@
+{
+  "schemaVersion": "0.2",
+  "tokenPattern": "^[A-Z]{3,12}$",
+  "description": "Registry of AIIS family tokens, the second segment of a signature id. A frozen token named a document surface in schema 0.1 and is kept only for the ids listed in its allowlist; it admits no new ids. An open token admits new ids that match its description. New injection families are named for the payload, not the surface: OVERRIDE, ROLE, JAILBREAK and EXFIL are the reserved next tokens and are minted with their first signature. See CONTRIBUTING.md, Minting a family.",
+  "families": [
+    {
+      "token": "HIDDEN",
+      "category": "injection",
+      "status": "frozen",
+      "description": "Named the hidden text surface in schema 0.1. Kept only for its existing ids; new payload families take a payload token.",
+      "mintedIn": "v0.1.0",
+      "ids": [
+        "AIIS-HIDDEN-CHATML-01",
+        "AIIS-HIDDEN-JAILBREAK-DAN-01",
+        "AIIS-HIDDEN-ROLE-INJECT-01"
+      ]
+    },
+    {
+      "token": "COMMENT",
+      "category": "injection",
+      "status": "frozen",
+      "description": "Named the HTML comment surface in schema 0.1. Kept only for its existing id; new payload families take a payload token.",
+      "mintedIn": "v0.1.0",
+      "ids": [
+        "AIIS-COMMENT-SYSTEM-OVERRIDE-01"
+      ]
+    },
+    {
+      "token": "META",
+      "category": "injection",
+      "status": "frozen",
+      "description": "Named the meta tag and llms.txt surface in schema 0.1. Kept only for its existing id; new payload families take a payload token.",
+      "mintedIn": "v0.1.0",
+      "ids": [
+        "AIIS-META-LLM-OVERRIDE-01"
+      ]
+    },
+    {
+      "token": "SCRIPT",
+      "category": "injection",
+      "status": "frozen",
+      "description": "Named the script string literal surface in schema 0.1. Kept only for its existing id; new payload families take a payload token.",
+      "mintedIn": "v0.1.0",
+      "ids": [
+        "AIIS-SCRIPT-ROLE-PLAY-01"
+      ]
+    },
+    {
+      "token": "HEADER",
+      "category": "injection",
+      "status": "frozen",
+      "description": "Named the HTTP header surface in schema 0.1. Kept only for its existing id; new payload families take a payload token.",
+      "mintedIn": "v0.1.0",
+      "ids": [
+        "AIIS-HEADER-INJECT-01"
+      ]
+    },
+    {
+      "token": "ATTR",
+      "category": "injection",
+      "status": "frozen",
+      "description": "Named the HTML attribute surface in schema 0.1. Kept only for its existing ids; new payload families take a payload token.",
+      "mintedIn": "v0.1.0",
+      "ids": [
+        "AIIS-ATTR-EXFIL-URL-01",
+        "AIIS-ATTR-IGNORE-INST-01"
+      ]
+    },
+    {
+      "token": "UNICODE",
+      "category": "injection",
+      "status": "open",
+      "description": "Invisible or steganographic codepoints carrying a payload: Tag block characters, zero width characters, bidirectional controls, variation selectors.",
+      "mintedIn": "v0.1.0"
+    },
+    {
+      "token": "EXPOSURE",
+      "category": "exposure",
+      "status": "open",
+      "description": "A publicly reachable AI component. The name segment names the component and the response it fingerprints (OLLAMA-TAGS, MCP-JSONRPC).",
+      "mintedIn": "v0.2.0"
+    }
+  ]
+}
