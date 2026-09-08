@@ -1,0 +1,38 @@
+{
+  "signature": "AIIS-EXPOSURE-MCP-JSONRPC-01",
+  "note": "JSON-RPC 2.0 result envelopes with the MCP tools/list shape (tools entries carrying inputSchema) or resources/list shape (resources entries carrying uri). Other JSON-RPC 2.0 services, error envelopes, and tool lists without the MCP fields do not match.",
+  "surface": "http_body",
+  "domain": "203.0.113.14",
+  "shouldMatch": [
+    {
+      "name": "tools-list",
+      "text": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"tools\":[{\"name\":\"read_file\",\"description\":\"Read a file from the workspace\",\"inputSchema\":{\"type\":\"object\",\"properties\":{\"path\":{\"type\":\"string\"}},\"required\":[\"path\"]}}]}}"
+    },
+    {
+      "name": "resources-list",
+      "text": "{\"jsonrpc\":\"2.0\",\"id\":2,\"result\":{\"resources\":[{\"uri\":\"file:///srv/notes.md\",\"name\":\"notes\",\"mimeType\":\"text/markdown\"}]}}"
+    },
+    {
+      "name": "two-tools",
+      "text": "{\"jsonrpc\":\"2.0\",\"id\":3,\"result\":{\"tools\":[{\"name\":\"search\",\"inputSchema\":{\"type\":\"object\"}},{\"name\":\"fetch\",\"inputSchema\":{\"type\":\"object\"}}]}}"
+    }
+  ],
+  "shouldNotMatch": [
+    {
+      "name": "ethereum-block-number",
+      "text": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":\"0x1b4\"}"
+    },
+    {
+      "name": "tools-without-schema",
+      "text": "{\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{\"tools\":[\"hammer\",\"saw\"]}}"
+    },
+    {
+      "name": "method-not-found",
+      "text": "{\"jsonrpc\":\"2.0\",\"id\":1,\"error\":{\"code\":-32601,\"message\":\"Method not found\"}}"
+    },
+    {
+      "name": "rest-tools-without-jsonrpc",
+      "text": "{\"tools\":[{\"name\":\"x\",\"inputSchema\":{\"type\":\"object\"}}]}"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "signature": "AIIS-EXPOSURE-OLLAMA-TAGS-01",
+  "note": "Compact JSON bodies of GET /api/tags as Ollama emits them: a models array whose entries carry a sha256 digest and a parameter_size detail. Other model listings (OpenAI compatible, model hubs) and other sha256 digest documents (container manifests) lack one of the three keys.",
+  "surface": "http_body",
+  "domain": "203.0.113.10",
+  "shouldMatch": [
+    {
+      "name": "llama3-listing",
+      "text": "{\"models\":[{\"name\":\"llama3:latest\",\"model\":\"llama3:latest\",\"modified_at\":\"2026-03-02T10:11:12.123Z\",\"size\":4661224676,\"digest\":\"sha256:365c0bd3c000a25d28ddbf732fe1c6add414de7275464c4e4d1c3b5fcb5d8ad1\",\"details\":{\"parent_model\":\"\",\"format\":\"gguf\",\"family\":\"llama\",\"families\":[\"llama\"],\"parameter_size\":\"8.0B\",\"quantization_level\":\"Q4_0\"}}]}"
+    },
+    {
+      "name": "mistral-listing",
+      "text": "{\"models\":[{\"name\":\"mistral:7b\",\"model\":\"mistral:7b\",\"modified_at\":\"2026-01-14T08:00:00Z\",\"size\":4113301824,\"digest\":\"sha256:f974a74358d62a017b37c6f424fcdf2744ca02926c4f952513ddf474b2fa5091\",\"details\":{\"format\":\"gguf\",\"family\":\"llama\",\"parameter_size\":\"7.2B\",\"quantization_level\":\"Q4_0\"}}]}"
+    },
+    {
+      "name": "two-models",
+      "text": "{\"models\":[{\"name\":\"phi3:mini\",\"digest\":\"sha256:4f2222927938f3f3b4c2e1b4b2a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3\",\"details\":{\"parameter_size\":\"3.8B\"}},{\"name\":\"gemma:2b\",\"digest\":\"sha256:b50d6c999e592ae4f79acae23b4b3e0c5c4fbe7a4b5c6d7e8f9a0b1c2d3e4f5a\",\"details\":{\"parameter_size\":\"2B\"}}]}"
+    }
+  ],
+  "shouldNotMatch": [
+    {
+      "name": "openai-models-listing",
+      "text": "{\"object\":\"list\",\"data\":[{\"id\":\"gpt-4o\",\"object\":\"model\",\"owned_by\":\"openai\"}]}"
+    },
+    {
+      "name": "container-manifest",
+      "text": "{\"schemaVersion\":2,\"layers\":[{\"mediaType\":\"application/vnd.oci.image.layer.v1.tar\",\"digest\":\"sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\"}]}"
+    },
+    {
+      "name": "model-hub-listing",
+      "text": "{\"models\":[{\"id\":\"bert-base-uncased\",\"parameter_size\":\"110M\",\"license\":\"apache-2.0\"}]}"
+    },
+    {
+      "name": "pretty-printed-space-after-colon",
+      "text": "{\"models\": [{\"name\": \"llama3\", \"digest\": \"sha256:365c0bd3\", \"details\": {\"parameter_size\": \"8.0B\"}}]}"
+    }
+  ]
+}

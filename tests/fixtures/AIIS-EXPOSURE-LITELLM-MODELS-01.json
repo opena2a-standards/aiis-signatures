@@ -1,0 +1,38 @@
+{
+  "signature": "AIIS-EXPOSURE-LITELLM-MODELS-01",
+  "note": "LiteLLM proxy bodies carrying one of its internal keys: litellm_params on /model/info, healthy_endpoints or unhealthy_endpoints on /health, litellm_version on /health/readiness. Generic OpenAI compatible listings, generic health bodies and prose mentioning the key names do not match.",
+  "surface": "http_body",
+  "domain": "203.0.113.12",
+  "shouldMatch": [
+    {
+      "name": "model-info-litellm-params",
+      "text": "{\"data\":[{\"model_name\":\"gpt-4o\",\"litellm_params\":{\"model\":\"openai/gpt-4o\",\"api_base\":\"https://api.openai.com/v1\"},\"model_info\":{\"id\":\"3f2a\",\"db_model\":false}}]}"
+    },
+    {
+      "name": "health-endpoints",
+      "text": "{\"healthy_endpoints\":[{\"model\":\"azure/gpt-4\",\"api_base\":\"https://contoso.openai.azure.com\"}],\"unhealthy_endpoints\":[],\"healthy_count\":1,\"unhealthy_count\":0}"
+    },
+    {
+      "name": "readiness-litellm-version",
+      "text": "{\"status\":\"healthy\",\"db\":\"connected\",\"cache\":null,\"litellm_version\":\"1.52.0\",\"success_callbacks\":[]}"
+    }
+  ],
+  "shouldNotMatch": [
+    {
+      "name": "openai-listing",
+      "text": "{\"object\":\"list\",\"data\":[{\"id\":\"gpt-4o\",\"object\":\"model\",\"owned_by\":\"openai\"}]}"
+    },
+    {
+      "name": "generic-health",
+      "text": "{\"status\":\"healthy\",\"version\":\"1.0.0\"}"
+    },
+    {
+      "name": "endpoint-list",
+      "text": "{\"endpoints\":[\"/v1/models\",\"/v1/chat/completions\"]}"
+    },
+    {
+      "name": "prose-mentioning-key",
+      "text": "Set litellm_params in the proxy config to route each model_name"
+    }
+  ]
+}
