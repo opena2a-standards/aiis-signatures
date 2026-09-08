@@ -203,11 +203,11 @@
       },
       "then": {
         "required": ["attack_vector", "attack_class"],
-        "not": { "required": ["exposure_class"] }
+        "properties": { "exposure_class": false }
       },
       "else": {
         "required": ["exposure_class"],
-        "not": { "required": ["attack_class"] }
+        "properties": { "attack_class": false }
       }
     },
     {

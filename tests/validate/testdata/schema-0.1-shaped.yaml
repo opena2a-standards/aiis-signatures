@@ -1,0 +1,16 @@
+# A schema 0.1 shaped document. It must FAIL schema 0.2 validation: it has
+# no schema_version, carries the removed technique_ids key, and puts a matrix
+# vector (SOUL-INJECT) in attack_class, which in 0.2 is a canonical class.
+id: AIIS-HIDDEN-ROLE-INJECT-01
+name: Role injection via fake system marker in hidden text
+version: 0.3.0
+severity: high
+attack_class: SOUL-INJECT
+technique_ids: [T-2001]
+surface_types: [hidden_text]
+match:
+  type: regex
+  pattern: '(?i)\[\s*system\s*\].{0,200}(ignore|override)'
+cwe_ids: [CWE-74]
+hma_check_ids: [AI-WILD-001]
+status: active
