@@ -1,6 +1,148 @@
 # AIIS Signatures changelog
 
-## v0.3.0 — 2026-07-07
+## corpus v0.4.0 (schema 0.2), 2026-09-08
+
+Schema 0.2 reconciles the corpus with the Agent Threat Matrix and the
+canonical attack class list, moves every signature into a directory named
+by its family token, records the retired seed ids, and replaces the
+stdlib-only pattern compiler with a validator that runs every check offline.
+
+**Schema (`schema/aiis-v0.2.schema.json`, JSON Schema draft 2020-12; `aiis-v0.1.schema.json` is unchanged):**
+
+- `schema_version` (constant `"0.2"`) and `category` are required; there is no
+  default category.
+- `technique_ids` is removed. A signature carries one primary `technique_id`
+  and optional `related_technique_ids`; both resolve against the vendored
+  matrix snapshot and the related list never repeats the primary.
+- `attack_class` is now one of the ten canonical classes (`injection`,
+  `exfiltration`, `credential_abuse`, `privilege_escalation`, `persistence`,
+  `lateral_movement`, `social_engineering`, `policy_violation`,
+  `steganography`, `benign`) and must equal the class whose primary list holds
+  `technique_id`. The matrix vector a signature used to put there moves to
+  `attack_vector`.
+- Category conditional: injection requires `attack_vector` and `attack_class`
+  and forbids `exposure_class`; exposure requires `exposure_class`, forbids
+  `attack_class`, and takes `attack_vector` only where
+  `schema/exposure-classes.json` documents a join.
+- `provenance` (`evidence_tier` of `observed`, `validated` or `adapted`, with
+  optional `source` and `first_seen`) is required on every `active` signature.
+- `status` is `draft` or `active`; `deprecated` is gone, a retired signature is
+  deleted and recorded in `retired-ids.yaml`.
+- `hma_check_ids` items follow the HackMyAgent check id grammar and resolve
+  against the vendored check id list. The field names the HackMyAgent check
+  from HackMyAgent's own taxonomy that detects the same payload family on
+  local agent files, and is empty where none exists. Every `AI-WILD-*` value
+  is removed.
+- `surface_types` gains `tool_description`, `tool_result`, `tool_error`,
+  `governance_file`, `memory_entry` and `skill_frontmatter`.
+- The id grammar is `^AIIS-([A-Z]{3,12})-([A-Z][A-Z0-9]*(?:-[A-Z][A-Z0-9]*)*)-([0-9]{2})$`.
+  Unknown keys are rejected; keys prefixed `x_` are admitted for implementer
+  extensions.
+
+**Registries:**
+
+- `schema/families.json` registers the family tokens. `HIDDEN`, `COMMENT`,
+  `META`, `SCRIPT`, `HEADER` and `ATTR` named a surface in schema 0.1 and are
+  frozen with an allowlist of their existing ids. `UNICODE` and `EXPOSURE` are
+  open. `OVERRIDE`, `ROLE`, `JAILBREAK` and `EXFIL` are reserved for the next
+  injection families and are minted with their first signature.
+- `schema/exposure-classes.json` lists the eight exposure classes, marks
+  `EXPOSURE-RAG-SERVICE`, `EXPOSURE-AI-COPILOT` and `EXPOSURE-TOOL-REGISTRY`
+  as reserved, and documents the join to `attack_vector`
+  (`EXPOSURE-SELFHOSTED-LLM`, `EXPOSURE-LLM-GATEWAY` and
+  `EXPOSURE-AGENT-FRAMEWORK` to `LLM-EXPOSE`; `EXPOSURE-MCP-SERVER` to
+  `MCP-EXPLOIT`; the others to none). `EXPOSURE-AUTH-MISCONFIG` and
+  `EXPOSURE-VERSION-DRIFT`, announced in v0.2.0, are not exposure classes.
+- `retired-ids.yaml` records the 32 numeric seed ids `AIIS-0001` to
+  `AIIS-0032` with a disposition (`retired`, `superseded`,
+  `superseded_narrowed`), the live successor where one exists, and a reason.
+  Ids are never reused.
+
+**Directory move:** every signature now lives at
+`signatures/<family lowercased>/<id>.yaml` (`attr/`, `comment/`, `exposure/`,
+`header/`, `hidden/`, `meta/`, `script/`, `unicode/`). The surface named
+directories `hidden-text/`, `html-attr/`, `html-comment/`, `http-body/`,
+`http-header/`, `meta-tag/` and `script-literal/` are removed.
+
+**Signature updates (every file bumps its patch version because the technique
+fields change; pattern, name, description, severity, surface types,
+references and status are unchanged):**
+
+- `AIIS-ATTR-EXFIL-URL-01` (`0.2.0` to `0.2.1`): technique T-2005 to T-8002
+  (HTTP Callback), related T-2001; vector `SKILL-EXFIL`, class
+  `exfiltration`; `hma_check_ids` `SEM-INST-002`, `AST-EXFIL-001`;
+  provenance adapted.
+- `AIIS-UNICODE-TAG-BLOCK-01` (`0.2.0` to `0.2.1`): technique T-2004 to
+  T-2006 (Unicode/Encoding Bypass); vector `UNICODE-STEGO`, class
+  `steganography`; `hma_check_ids` `UNICODE-STEGO-004`; provenance observed.
+- `AIIS-HIDDEN-CHATML-01` (`0.1.0` to `0.1.1`): technique T-2001 to T-2008
+  (System Prompt Boundary Bypass), related T-2001; vector `SOUL-INJECT`,
+  class `injection`; provenance validated.
+- `AIIS-HIDDEN-JAILBREAK-DAN-01` (`0.2.0` to `0.2.1`): technique T-2003
+  unchanged, related T-2001; vector `SOUL-INJECT`, class `injection`;
+  provenance observed with source and first seen date.
+- `AIIS-HIDDEN-ROLE-INJECT-01` (`0.3.0` to `0.3.1`): technique T-2001
+  unchanged, related T-2008; vector `SOUL-INJECT`, class `injection`;
+  provenance validated with source and first seen date.
+- `AIIS-META-LLM-OVERRIDE-01` (`0.1.0` to `0.1.1`): techniques T-2001 and
+  T-2005 to T-2001 alone; vector `SOUL-INJECT`, class `injection`;
+  provenance validated.
+- `AIIS-COMMENT-SYSTEM-OVERRIDE-01`, `AIIS-HEADER-INJECT-01`,
+  `AIIS-ATTR-IGNORE-INST-01` (`0.1.0` to `0.1.1`): technique T-2001
+  unchanged; vector `SOUL-INJECT`, class `injection`; provenance validated
+  (observed with a first seen date for IGNORE-INST).
+- `AIIS-SCRIPT-ROLE-PLAY-01` (`0.1.0` to `0.1.1`): technique T-2003
+  unchanged; vector `SOUL-INJECT`, class `injection`; provenance validated.
+- `AIIS-EXPOSURE-MCP-JSONRPC-01` (`0.1.0` to `0.1.1`): techniques T-1001 and
+  T-4007 to T-1002 (Tool Discovery); vector `MCP-EXPLOIT`, exposure class
+  `EXPOSURE-MCP-SERVER`; provenance adapted from the MCP specification.
+- `AIIS-EXPOSURE-OLLAMA-TAGS-01` and `AIIS-EXPOSURE-VLLM-MODELS-01` (`0.1.0`
+  to `0.1.1`): techniques T-1001, T-4007 and T-7007 to T-1001 alone; vector
+  `LLM-EXPOSE`, exposure class `EXPOSURE-SELFHOSTED-LLM`; `hma_check_ids`
+  `LLM-001` and `LLM-002`; provenance adapted from the component
+  documentation.
+- `AIIS-EXPOSURE-OLLAMA-VERSION-01` (`0.1.0` to `0.1.1`): technique T-1001
+  unchanged; vector `LLM-EXPOSE`, exposure class `EXPOSURE-SELFHOSTED-LLM`;
+  `hma_check_ids` `LLM-001`; provenance adapted.
+- `AIIS-EXPOSURE-LITELLM-MODELS-01` (`0.1.0` to `0.1.1`): techniques T-1001
+  and T-6007 to T-1001 alone; vector `LLM-EXPOSE`, exposure class
+  `EXPOSURE-LLM-GATEWAY`; `hma_check_ids` `LLM-004`; provenance adapted.
+- `AIIS-EXPOSURE-LANGSERVE-ROUTES-01` (`0.1.0` to `0.1.1`): techniques T-1001
+  and T-4007 to T-1001 alone; vector `LLM-EXPOSE`, exposure class
+  `EXPOSURE-AGENT-FRAMEWORK`; `hma_check_ids` `NET-001`; provenance adapted.
+- `AIIS-EXPOSURE-CHROMA-HEARTBEAT-01` and `AIIS-EXPOSURE-QDRANT-ROOT-01`
+  (`0.1.0` to `0.1.1`): technique T-1001 unchanged; no attack vector;
+  exposure class `EXPOSURE-VECTOR-DB`; provenance adapted.
+- Removed from every signature: `technique_ids`, the `AI-WILD-*` check ids
+  (`AI-WILD-001` to `AI-WILD-010`), and the matrix vector in `attack_class`.
+
+**Fixtures:** `tests/fixtures/<id>.json` now exists for all 18 signatures,
+each with at least three `shouldMatch` and three `shouldNotMatch` cases.
+Exposure fixtures are response body excerpts of the component.
+
+**Vendored snapshots:** `vendor/agent-threat-matrix/` carries `matrix.json`
+and `canonical-classes.json` at the commit recorded in its `VENDOR.json`;
+`vendor/hackmyagent/` carries `check-ids.json` generated from the published
+package by `generate.mjs`. `crosswalks/technique-signatures.json` is generated
+by the validator.
+
+**Validator and CI:** `tests/validate/` is rewritten with vendored
+dependencies and runs thirteen checks offline (schema, id grammar, family
+registry and layout, technique resolution, canonical class, attack vector,
+exposure class, vocabulary disjointness, fixture presence, fixture cases
+through a real implementation of the four match types, retired ids against
+the merge base, crosswalk freshness, vendor manifests and `hma_check_ids`
+resolution). A Go test asserts that a schema 0.1 shaped document is rejected.
+The workflow adds a vendor integrity job that diffs the snapshots against
+their sources and a drift report that prints the corpus commit served by the
+public registry next to the pushed commit.
+
+**Release tags:** the three earlier releases receive tags `v0.2.0`, `v0.2.1`
+and `v0.3.0` at their commits, and this release `v0.4.0`. Tags are created by
+the maintainers at release time, not in this change.
+
+
+## corpus v0.3.0 (schema 0.1), 2026-07-07
 
 Precision fixes in the two highest-volume hidden-text signatures (DAN and
 role-injection), plus the regional-flag-emoji exclusion for the Unicode Tag-block
@@ -95,7 +237,7 @@ real cases per signature) exercised by the HoneyMap reference implementation.
   test suite, which now checks this repo out as a sibling so those tests run
   instead of skipping.
 
-## v0.2.1 — 2026-05-11
+## corpus v0.2.1 (schema 0.1), 2026-05-11
 
 False-positive reduction in the two highest-volume seed signatures, which
 together produced ~72% of HoneyMap dashboard surfaces and were dominated by
@@ -173,7 +315,7 @@ the version bump):
 - HTML tag injection between verb and object inside an attribute value
   ("send the&lt;br/&gt;api key to https://...").
 
-## v0.2.0 — 2026-04-21
+## corpus v0.2.0 (schema 0.1), 2026-04-21
 
 Introduces the `exposure` signature category alongside `injection`. Schema is
 backward-compatible: signatures without an explicit `category` default to
@@ -204,7 +346,7 @@ backward-compatible: signatures without an explicit `category` default to
 - `EXPOSURE-AUTH-MISCONFIG` — unauthenticated admin/management endpoints
 - `EXPOSURE-VERSION-DRIFT` — per-CVE matchers, populated from vulnerability data
 
-## v0.1.0 — 2026-04-14
+## corpus v0.1.0 (schema 0.1), 2026-04-14
 
 Initial public release. 10 seed signatures across 6 surface types:
 

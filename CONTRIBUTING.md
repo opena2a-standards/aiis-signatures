@@ -27,6 +27,21 @@ We especially welcome:
 
 Small fixes (typos, broken links, clarifications) can go straight to a pull request. For new signatures or changes to the signature schema, open an issue first so the change can be discussed and validated against the test corpus before implementation work begins.
 
+## Minting a family
+
+The family token is the second segment of a signature id (`AIIS-<FAMILY>-<NAME>-<NN>`) and every token is registered in `schema/families.json`. A new token is minted by one pull request that carries, together:
+
+- the `families.json` entry (token, category, status `open`, description, `mintedIn` set to the release that will ship it);
+- at least one signature using the token, with its `tests/fixtures/<id>.json`;
+- a CHANGELOG line naming the token;
+- one paragraph explaining why no existing family fits.
+
+Injection families are named for the payload, not for the document surface. `OVERRIDE`, `ROLE`, `JAILBREAK` and `EXFIL` are the reserved next tokens; they are minted with their first signature, not ahead of it. The six surface tokens of schema 0.1 (`HIDDEN`, `COMMENT`, `META`, `SCRIPT`, `HEADER`, `ATTR`) are frozen: they admit no new ids, and the validator rejects an id under a frozen token that is not in that token's allowlist. The maintainers approve a new token; a pull request missing any of the four parts is not merged.
+
+## Retiring a signature
+
+A signature is retired by deleting its file and adding a record to `retired-ids.yaml` in the same pull request, with the id, the disposition (`retired`, or `superseded` or `superseded_narrowed` with `superseded_by` naming the live signature that carries the intent), `retired_at`, `retired_in` and a reason. The validator compares `signatures/` with the merge base and fails when a signature disappears without a record. Ids are never reused: a retired id stays in `retired-ids.yaml` for good, and a replacement takes the next sequence number.
+
 ## Ground rules
 
 - Contributions are licensed under Apache-2.0, consistent with the project license.
