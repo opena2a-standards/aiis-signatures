@@ -1,0 +1,7 @@
+{
+  "repo": "opena2a-standards/agent-threat-matrix",
+  "commit": "6a88f99676273ed678001a088ee16247aca43208",
+  "version": "1.1",
+  "files": ["matrix.json", "canonical-classes.json"],
+  "refresh": "git -C <agent-threat-matrix checkout> show <commit>:matrix.json > vendor/agent-threat-matrix/matrix.json; same for canonical-classes.json; then update commit and version here"
+}

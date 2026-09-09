@@ -1,0 +1,38 @@
+{
+  "signature": "AIIS-EXPOSURE-VLLM-MODELS-01",
+  "note": "OpenAI compatible /v1/models bodies where vLLM attributes the model to itself with owned_by vllm. Listings from other servers carry a different owned_by, and a fragment lacking the list envelope does not match.",
+  "surface": "http_body",
+  "domain": "203.0.113.11",
+  "shouldMatch": [
+    {
+      "name": "llama-3-1-8b",
+      "text": "{\"object\":\"list\",\"data\":[{\"id\":\"meta-llama/Llama-3.1-8B-Instruct\",\"object\":\"model\",\"created\":1741000000,\"owned_by\":\"vllm\",\"root\":\"meta-llama/Llama-3.1-8B-Instruct\",\"parent\":null,\"max_model_len\":131072,\"permission\":[]}]}"
+    },
+    {
+      "name": "qwen-listing",
+      "text": "{\"object\":\"list\",\"data\":[{\"id\":\"Qwen/Qwen2.5-7B-Instruct\",\"object\":\"model\",\"created\":1738000000,\"owned_by\":\"vllm\",\"root\":\"Qwen/Qwen2.5-7B-Instruct\",\"parent\":null,\"max_model_len\":32768}]}"
+    },
+    {
+      "name": "two-models",
+      "text": "{\"object\":\"list\",\"data\":[{\"id\":\"mistralai/Mistral-7B-Instruct-v0.3\",\"object\":\"model\",\"owned_by\":\"vllm\"},{\"id\":\"lora-adapter-1\",\"object\":\"model\",\"owned_by\":\"vllm\",\"parent\":\"mistralai/Mistral-7B-Instruct-v0.3\"}]}"
+    }
+  ],
+  "shouldNotMatch": [
+    {
+      "name": "openai-listing",
+      "text": "{\"object\":\"list\",\"data\":[{\"id\":\"gpt-4o\",\"object\":\"model\",\"created\":1715367049,\"owned_by\":\"openai\"}]}"
+    },
+    {
+      "name": "lm-studio-listing",
+      "text": "{\"object\":\"list\",\"data\":[{\"id\":\"llama-3.2-1b-instruct\",\"object\":\"model\",\"owned_by\":\"organization_owner\"}]}"
+    },
+    {
+      "name": "empty-listing",
+      "text": "{\"object\":\"list\",\"data\":[]}"
+    },
+    {
+      "name": "model-fragment-without-list",
+      "text": "{\"id\":\"x\",\"object\":\"model\",\"owned_by\":\"vllm\"}"
+    }
+  ]
+}

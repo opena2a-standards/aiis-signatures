@@ -1,0 +1,7 @@
+{
+  "package": "hackmyagent",
+  "version": "0.32.0",
+  "registry": "https://registry.npmjs.org",
+  "files": ["check-ids.json"],
+  "generate": "npm pack hackmyagent@0.32.0 --pack-destination <dir> && tar xzf <dir>/hackmyagent-0.32.0.tgz -C <dir> && node vendor/hackmyagent/generate.mjs <dir>/package > vendor/hackmyagent/check-ids.json"
+}

@@ -1,0 +1,277 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://opena2a.org/aiis/v0.2.schema.json",
+  "title": "AIIS signature, schema 0.2",
+  "description": "One AIIS detection signature. A signature is evaluated against one document (a page, a header set, a body); session or telemetry evaluated behaviour is out of scope for this format. Schema 0.2 replaces the free-form attack_class and technique_ids of schema 0.1 with a primary technique_id, a matrix attack_vector, a canonical attack_class or an exposure_class selected by category, and a provenance block.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "id",
+    "name",
+    "version",
+    "severity",
+    "status",
+    "surface_types",
+    "match",
+    "category",
+    "technique_id"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "0.2",
+      "description": "The schema this file conforms to. Always the string 0.2 for this schema."
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^AIIS-([A-Z]{3,12})-([A-Z][A-Z0-9]*(?:-[A-Z][A-Z0-9]*)*)-([0-9]{2})$",
+      "description": "Globally unique signature id: AIIS-<FAMILY>-<NAME>-<NN>. The family token is 3 to 12 upper-case letters and must be registered in schema/families.json; each name segment starts with a letter; NN is a two digit sequence. The file lives at signatures/<family lowercased>/<id>.yaml."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human readable signature name."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semver of the signature itself. Incremented whenever the pattern or the technique fields change."
+    },
+    "description": {
+      "type": "string"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["critical", "high", "medium", "low", "info"]
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "active"],
+      "description": "draft signatures are published for review; active signatures carry provenance. A retired signature is deleted from the corpus and recorded in retired-ids.yaml, so there is no deprecated status on a signature file."
+    },
+    "category": {
+      "type": "string",
+      "enum": ["injection", "exposure"],
+      "description": "injection matches an attack payload embedded in a document. exposure matches evidence that a host publicly reaches an AI component. Selects which classification fields are required; there is no default."
+    },
+    "technique_id": {
+      "type": "string",
+      "pattern": "^T-\\d{4}(\\.\\d{3})?$",
+      "description": "The primary Agent Threat Matrix technique this signature evidences. Resolved against vendor/agent-threat-matrix/matrix.json."
+    },
+    "related_technique_ids": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^T-\\d{4}(\\.\\d{3})?$"
+      },
+      "description": "Secondary techniques the same payload also evidences. Must not repeat the primary technique_id."
+    },
+    "attack_vector": {
+      "type": "string",
+      "pattern": "^[A-Z0-9]+(-[A-Z0-9]+)+$",
+      "description": "An attackClasses id from the Agent Threat Matrix (matrix.json). Required for injection; optional for exposure, where schema/exposure-classes.json documents the join from exposure_class."
+    },
+    "attack_class": {
+      "type": "string",
+      "enum": [
+        "injection",
+        "exfiltration",
+        "credential_abuse",
+        "privilege_escalation",
+        "persistence",
+        "lateral_movement",
+        "social_engineering",
+        "policy_violation",
+        "steganography",
+        "benign"
+      ],
+      "description": "One of the ten canonical attack classes (canonical-classes.json). Required for injection and must be the class whose primary list carries technique_id. Forbidden for exposure."
+    },
+    "exposure_class": {
+      "type": "string",
+      "pattern": "^EXPOSURE-[A-Z0-9]+-[A-Z0-9]+$",
+      "enum": [
+        "EXPOSURE-MCP-SERVER",
+        "EXPOSURE-LLM-GATEWAY",
+        "EXPOSURE-SELFHOSTED-LLM",
+        "EXPOSURE-AGENT-FRAMEWORK",
+        "EXPOSURE-VECTOR-DB",
+        "EXPOSURE-RAG-SERVICE",
+        "EXPOSURE-AI-COPILOT",
+        "EXPOSURE-TOOL-REGISTRY"
+      ],
+      "description": "The exposed component family, from schema/exposure-classes.json. Required for exposure, forbidden for injection. EXPOSURE-RAG-SERVICE, EXPOSURE-AI-COPILOT and EXPOSURE-TOOL-REGISTRY are reserved: they are valid values with no signature yet."
+    },
+    "surface_types": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "enum": [
+          "hidden_text",
+          "html_comment",
+          "meta_tag",
+          "json_ld",
+          "robots_llms",
+          "alt_aria",
+          "open_graph",
+          "noscript",
+          "http_header",
+          "inline_style",
+          "script_literal",
+          "data_attr",
+          "http_body",
+          "tls_cert",
+          "tool_description",
+          "tool_result",
+          "tool_error",
+          "governance_file",
+          "memory_entry",
+          "skill_frontmatter"
+        ]
+      }
+    },
+    "match": {
+      "$ref": "#/$defs/match"
+    },
+    "cwe_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^CWE-\\d+$"
+      }
+    },
+    "hma_check_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Z][A-Z0-9]*(?:-[A-Z][A-Z0-9]*)*-[0-9]{3}$"
+      },
+      "description": "The HackMyAgent check from its taxonomy that detects the same payload family on local agent files, empty where none exists. Resolved against vendor/hackmyagent/check-ids.json."
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["evidence_tier"],
+      "properties": {
+        "evidence_tier": {
+          "type": "string",
+          "enum": ["observed", "validated", "adapted"],
+          "description": "observed: the payload was seen on a live document. validated: the pattern was confirmed against samples and a false positive corpus. adapted: the pattern was derived from a published description of the component or payload."
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Where the evidence comes from: a URL, a report identifier or a corpus name."
+        },
+        "first_seen": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "description": "The date the payload or component was first observed, ISO 8601 calendar date."
+        }
+      },
+      "additionalProperties": false,
+      "description": "Evidence behind the signature. Required, with at least evidence_tier, when status is active. The validator warns when source or first_seen is absent on an active signature."
+    },
+    "false_positive_notes": {
+      "type": "string"
+    },
+    "excluded_domains": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Optional list of host regex patterns (anchored ^...$ by the engine at compile time). When a document's source domain matches any entry, the signature is skipped for that document."
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "format": "uri-reference"
+      }
+    }
+  },
+  "patternProperties": {
+    "^x_": {}
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "if": {
+        "properties": { "category": { "const": "injection" } }
+      },
+      "then": {
+        "required": ["attack_vector", "attack_class"],
+        "properties": { "exposure_class": false }
+      },
+      "else": {
+        "required": ["exposure_class"],
+        "properties": { "attack_class": false }
+      }
+    },
+    {
+      "if": {
+        "properties": { "status": { "const": "active" } }
+      },
+      "then": {
+        "required": ["provenance"]
+      }
+    }
+  ],
+  "$defs": {
+    "match": {
+      "type": "object",
+      "required": ["type"],
+      "oneOf": [
+        {
+          "properties": {
+            "type": { "const": "regex" },
+            "pattern": { "type": "string" },
+            "flags": { "type": "string", "pattern": "^[imsxU]*$" }
+          },
+          "required": ["pattern"]
+        },
+        {
+          "properties": {
+            "type": { "const": "substring" },
+            "contains": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+            "case_sensitive": { "type": "boolean", "default": false }
+          },
+          "required": ["contains"]
+        },
+        {
+          "properties": {
+            "type": { "const": "unicode_range" },
+            "ranges": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "from": { "type": "string" },
+                  "to": { "type": "string" }
+                },
+                "required": ["from", "to"]
+              }
+            },
+            "min_matches": { "type": "integer", "minimum": 1, "default": 1 },
+            "exclude_emoji_tag_flags": {
+              "type": "boolean",
+              "default": false,
+              "description": "When true, well-formed regional-indicator flag emoji (U+1F3F4 base + Tag characters + U+E007F terminator) are removed before counting Tag-block characters, so legitimate flags are not read as steganographic injection."
+            }
+          },
+          "required": ["ranges"]
+        },
+        {
+          "properties": {
+            "type": { "const": "composite" },
+            "all_of": { "type": "array", "items": { "$ref": "#/$defs/match" } },
+            "any_of": { "type": "array", "items": { "$ref": "#/$defs/match" } }
+          }
+        }
+      ]
+    }
+  }
+}

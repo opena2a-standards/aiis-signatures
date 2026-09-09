@@ -1,0 +1,38 @@
+{
+  "signature": "AIIS-EXPOSURE-OLLAMA-VERSION-01",
+  "note": "The whole body is a single key object mapping version to a semver string, as GET /api/version returns. Multi key objects, non semver versions and non JSON version lines do not match.",
+  "surface": "http_body",
+  "domain": "203.0.113.10",
+  "shouldMatch": [
+    {
+      "name": "compact",
+      "text": "{\"version\":\"0.6.2\"}"
+    },
+    {
+      "name": "prerelease-suffix",
+      "text": "{\"version\":\"0.5.13-rc1\"}"
+    },
+    {
+      "name": "spaced-with-newline",
+      "text": "{ \"version\" : \"0.11.4\" }\n"
+    }
+  ],
+  "shouldNotMatch": [
+    {
+      "name": "single-number-version",
+      "text": "{\"version\":\"2\"}"
+    },
+    {
+      "name": "version-with-name",
+      "text": "{\"version\":\"1.2.3\",\"name\":\"myapp\"}"
+    },
+    {
+      "name": "status-then-version",
+      "text": "{\"status\":\"ok\",\"version\":\"3.1.0\"}"
+    },
+    {
+      "name": "yaml-version-line",
+      "text": "version: 1.2.3"
+    }
+  ]
+}

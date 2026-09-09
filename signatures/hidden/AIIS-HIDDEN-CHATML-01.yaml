@@ -1,0 +1,30 @@
+schema_version: "0.2"
+id: AIIS-HIDDEN-CHATML-01
+category: injection
+name: ChatML role marker injection in hidden text
+version: 0.1.1
+description: |
+  Detects hidden use of ChatML role markers (<|system|>, <|assistant|>, <|user|>)
+  to inject turns into an agent's conversation context.
+severity: high
+technique_id: T-2008
+related_technique_ids: [T-2001]
+attack_vector: SOUL-INJECT
+attack_class: injection
+surface_types: [hidden_text, html_comment, alt_aria]
+match:
+  type: substring
+  contains:
+    - "<|system|>"
+    - "<|assistant|>"
+    - "<|user|>"
+  case_sensitive: false
+cwe_ids: [CWE-74]
+hma_check_ids: []
+false_positive_notes: >
+  LLM documentation and tutorials commonly show these markers in code blocks.
+  Production use should scope to surfaces where a human reader would NOT see
+  the text (hidden_text, html_comment), not rendered page content.
+provenance:
+  evidence_tier: validated
+status: active

@@ -17,3 +17,8 @@ tests/fixtures/
 # joiner evasion example under v0.2.1), so it intentionally carries invisible /
 # adversarial codepoints that the unicode-stego checks flag.
 CHANGELOG.md
+
+# retired-ids.yaml records why each retired pattern was dropped, quoting the pattern
+# fragments (callback-service hosts, credential-shaped runs) it used to match. Same
+# class as the signature files above: descriptions of attacks, not secrets.
+retired-ids.yaml

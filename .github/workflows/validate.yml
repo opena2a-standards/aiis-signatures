@@ -4,22 +4,91 @@ on:
   pull_request:
   push:
     branches: [main]
+    tags: ['v*']
 
 permissions:
   contents: read
 
 jobs:
   validate:
-    name: Compile patterns + run fixtures
+    name: Schema, registries, matcher and fixtures
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history so the validator can compare signatures/ against the
+          # merge base with main (check 11b). A shallow checkout downgrades
+          # that check to a warning.
+          fetch-depth: 0
       - uses: actions/setup-go@v5
         with:
           go-version: '1.22'
-      # Self-contained (stdlib-only, no network): compiles every signature
-      # pattern with Go RE2 and runs the plain-text fixtures. Codepoint-based
-      # fixtures are exercised by the HoneyMap reference matcher's test suite.
-      - name: Validate
+      # Offline: every dependency is vendored under tests/validate/vendor and
+      # the module proxy is switched off so a missing vendor entry fails here
+      # instead of being fetched.
+      - name: Unit tests
         working-directory: tests/validate
-        run: go run .
+        env:
+          GOPROXY: 'off'
+        run: go test -mod=vendor ./...
+      - name: Validate the corpus
+        working-directory: tests/validate
+        env:
+          GOPROXY: 'off'
+        run: go run -mod=vendor .
+
+  vendor-integrity:
+    name: Vendored snapshots match their sources
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read the vendor manifests
+        id: manifests
+        run: |
+          echo "atm_commit=$(jq -r .commit vendor/agent-threat-matrix/VENDOR.json)" >> "$GITHUB_OUTPUT"
+          echo "hma_version=$(jq -r .version vendor/hackmyagent/VENDOR.json)" >> "$GITHUB_OUTPUT"
+      - name: Check out the Agent Threat Matrix at the vendored commit
+        uses: actions/checkout@v4
+        with:
+          repository: opena2a-standards/agent-threat-matrix
+          ref: ${{ steps.manifests.outputs.atm_commit }}
+          path: .vendor-check/agent-threat-matrix
+      - name: Diff the matrix snapshot
+        run: |
+          diff .vendor-check/agent-threat-matrix/matrix.json vendor/agent-threat-matrix/matrix.json
+          diff .vendor-check/agent-threat-matrix/canonical-classes.json vendor/agent-threat-matrix/canonical-classes.json
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Regenerate the HackMyAgent check ids and diff them
+        env:
+          HMA_VERSION: ${{ steps.manifests.outputs.hma_version }}
+        run: |
+          mkdir -p .vendor-check/hma
+          npm pack "hackmyagent@${HMA_VERSION}" --pack-destination .vendor-check/hma
+          tar xzf ".vendor-check/hma/hackmyagent-${HMA_VERSION}.tgz" -C .vendor-check/hma
+          node vendor/hackmyagent/generate.mjs .vendor-check/hma/package > .vendor-check/check-ids.json
+          diff .vendor-check/check-ids.json vendor/hackmyagent/check-ids.json
+
+  drift-report:
+    # A report, never a gate: prints which corpus commit the public registry
+    # serves next to the commit that was just pushed.
+    name: Registry drift report
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Compare the registry corpus commit with this push
+        env:
+          PUSHED_SHA: ${{ github.sha }}
+        run: |
+          stats=$(curl -sS --max-time 20 https://api.oa2a.org/api/v1/aiis/stats)
+          echo "$stats" | jq .
+          corpus=$(echo "$stats" | jq -r '.corpusCommit // empty')
+          echo "registry corpusCommit: ${corpus:-unknown}"
+          echo "pushed commit:         ${PUSHED_SHA}"
+          if [ "$corpus" = "$PUSHED_SHA" ]; then
+            echo "The registry serves this commit."
+          else
+            echo "The registry has not ingested this commit yet."
+          fi

@@ -1,0 +1,23 @@
+schema_version: "0.2"
+id: AIIS-COMMENT-SYSTEM-OVERRIDE-01
+category: injection
+name: System override instruction in HTML comment
+version: 0.1.1
+description: |
+  HTML comments are invisible to human readers but included in the raw HTML
+  passed to LLM-based scrapers. Detects comments that frame themselves as
+  administrative directives to the AI.
+severity: high
+technique_id: T-2001
+related_technique_ids: []
+attack_vector: SOUL-INJECT
+attack_class: injection
+surface_types: [html_comment]
+match:
+  type: regex
+  pattern: '(?i)(to\s+the\s+AI|dear\s+(agent|assistant|AI)|attention\s+(AI|agent|model)|system\s+message|admin\s+note)[\s:,.-]+.{0,300}(ignore|override|reveal|execute|run|fetch|send|follow)'
+cwe_ids: [CWE-74]
+hma_check_ids: []
+provenance:
+  evidence_tier: validated
+status: active

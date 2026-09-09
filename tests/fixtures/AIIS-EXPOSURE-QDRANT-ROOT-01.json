@@ -1,0 +1,38 @@
+{
+  "signature": "AIIS-EXPOSURE-QDRANT-ROOT-01",
+  "note": "The Qdrant root response: a title key beginning with qdrant and the phrase vector search engine, case insensitive. Other Qdrant pages, other engines with the same tagline, and HTML titles do not match.",
+  "surface": "http_body",
+  "domain": "203.0.113.16",
+  "shouldMatch": [
+    {
+      "name": "root-with-commit",
+      "text": "{\"title\":\"qdrant - vector search engine\",\"version\":\"1.12.4\",\"commit\":\"a1b2c3d4e5f6\"}"
+    },
+    {
+      "name": "root-older",
+      "text": "{\"title\":\"qdrant - vector search engine\",\"version\":\"1.9.0\"}"
+    },
+    {
+      "name": "root-mixed-case",
+      "text": "{\"title\":\"Qdrant - Vector Search Engine\",\"version\":\"1.13.0\",\"commit\":\"deadbeef\"}"
+    }
+  ],
+  "shouldNotMatch": [
+    {
+      "name": "dashboard-title",
+      "text": "{\"title\":\"qdrant dashboard\",\"version\":\"1.12.4\"}"
+    },
+    {
+      "name": "html-title",
+      "text": "<title>Qdrant: Vector Search Engine</title>"
+    },
+    {
+      "name": "other-engine",
+      "text": "{\"title\":\"milvus - vector search engine\",\"version\":\"2.4.0\"}"
+    },
+    {
+      "name": "name-not-title",
+      "text": "{\"name\":\"qdrant\",\"description\":\"vector search engine\"}"
+    }
+  ]
+}

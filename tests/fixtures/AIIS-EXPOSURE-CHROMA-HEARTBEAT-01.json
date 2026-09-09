@@ -1,0 +1,38 @@
+{
+  "signature": "AIIS-EXPOSURE-CHROMA-HEARTBEAT-01",
+  "note": "The whole body is the Chroma heartbeat object: the key nanosecond heartbeat (with the space) and an 18 digit or longer integer. Other heartbeat shapes, an underscore key, a shorter integer, and a body with extra keys do not match.",
+  "surface": "http_body",
+  "domain": "203.0.113.15",
+  "shouldMatch": [
+    {
+      "name": "compact",
+      "text": "{\"nanosecond heartbeat\":1741000000123456789}"
+    },
+    {
+      "name": "spaced",
+      "text": "{ \"nanosecond heartbeat\": 1725000000000000000 }"
+    },
+    {
+      "name": "trailing-newline",
+      "text": "{\"nanosecond heartbeat\" : 1699999999999999999}\n"
+    }
+  ],
+  "shouldNotMatch": [
+    {
+      "name": "generic-heartbeat",
+      "text": "{\"heartbeat\":1741000000}"
+    },
+    {
+      "name": "seconds-not-nanoseconds",
+      "text": "{\"nanosecond heartbeat\":1741000000}"
+    },
+    {
+      "name": "underscore-key",
+      "text": "{\"nanosecond_heartbeat\":1741000000123456789}"
+    },
+    {
+      "name": "extra-keys",
+      "text": "{\"nanosecond heartbeat\":1741000000123456789,\"version\":\"0.5.0\"}"
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "schemaVersion": "0.2",
+  "description": "The exposure_class values of an exposure signature: the family of AI component that a matched response shape proves publicly reachable. attackVector is the documented join to the Agent Threat Matrix attackClasses id a signature of that class carries in attack_vector; null means the signature carries no attack_vector. A reserved class is a valid value with no signature yet.",
+  "classes": [
+    {
+      "id": "EXPOSURE-MCP-SERVER",
+      "description": "An MCP server answering JSON-RPC requests such as tools/list or resources/list.",
+      "attackVector": "MCP-EXPLOIT",
+      "reserved": false
+    },
+    {
+      "id": "EXPOSURE-LLM-GATEWAY",
+      "description": "An LLM gateway or proxy that fronts several model backends behind one API (LiteLLM and similar).",
+      "attackVector": "LLM-EXPOSE",
+      "reserved": false
+    },
+    {
+      "id": "EXPOSURE-SELFHOSTED-LLM",
+      "description": "A self-hosted inference server or its UI (Ollama, vLLM, llama.cpp, LocalAI).",
+      "attackVector": "LLM-EXPOSE",
+      "reserved": false
+    },
+    {
+      "id": "EXPOSURE-AGENT-FRAMEWORK",
+      "description": "An agent framework serving runnables or chains over HTTP (LangServe, AutoGen, CrewAI).",
+      "attackVector": "LLM-EXPOSE",
+      "reserved": false
+    },
+    {
+      "id": "EXPOSURE-VECTOR-DB",
+      "description": "A vector database management or query endpoint (Chroma, Qdrant, Milvus, Weaviate).",
+      "attackVector": null,
+      "reserved": false
+    },
+    {
+      "id": "EXPOSURE-RAG-SERVICE",
+      "description": "A retrieval augmented generation service exposing query or ingestion endpoints (Haystack, RAGFlow).",
+      "attackVector": null,
+      "reserved": true
+    },
+    {
+      "id": "EXPOSURE-AI-COPILOT",
+      "description": "A self-hosted copilot style proxy exposing completion endpoints.",
+      "attackVector": null,
+      "reserved": true
+    },
+    {
+      "id": "EXPOSURE-TOOL-REGISTRY",
+      "description": "A tool registry or MCP catalogue listing installable tools or servers.",
+      "attackVector": null,
+      "reserved": true
+    }
+  ]
+}
