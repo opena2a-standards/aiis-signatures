@@ -171,6 +171,82 @@ func TestMatchers(t *testing.T) {
 	}
 }
 
+// A README use case that names a surface type no shipped signature declares
+// must say so in its "Where it stops today" line, so it does not read as
+// covered today.
+func TestReadmeUseCasesNameUncoveredSurfaces(t *testing.T) {
+	schemaDoc, err := readJSON[map[string]any](filepath.Join(repoRoot, filepath.FromSlash(schemaPath)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	props, _ := schemaDoc["properties"].(map[string]any)
+	surfaces, _ := props["surface_types"].(map[string]any)
+	items, _ := surfaces["items"].(map[string]any)
+	enum, _ := items["enum"].([]any)
+	if len(enum) == 0 {
+		t.Fatal("schema has no surface_types enum")
+	}
+
+	sigs, errs := loadSignatures(repoRoot)
+	if len(errs) > 0 {
+		t.Fatalf("load signatures: %v", errs)
+	}
+	declared := map[string]bool{}
+	for _, s := range sigs {
+		doc, _ := s.raw.(map[string]any)
+		list, _ := doc["surface_types"].([]any)
+		for _, v := range list {
+			if st, ok := v.(string); ok {
+				declared[st] = true
+			}
+		}
+	}
+
+	b, err := os.ReadFile(filepath.Join(repoRoot, "README.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	readme := string(b)
+	start := strings.Index(readme, "\n## Use cases\n")
+	if start < 0 {
+		t.Fatal(`README has no "## Use cases" section`)
+	}
+	section := readme[start+len("\n## Use cases\n"):]
+	if end := strings.Index(section, "\n## "); end >= 0 {
+		section = section[:end]
+	}
+
+	checked := 0
+	for _, useCase := range strings.Split(section, "\n### ")[1:] {
+		title, _, _ := strings.Cut(useCase, "\n")
+		var prose, stops []string
+		for _, line := range strings.Split(useCase, "\n") {
+			if strings.HasPrefix(line, "Where it stops today:") {
+				stops = append(stops, strings.ToLower(line))
+			} else {
+				prose = append(prose, strings.ToLower(line))
+			}
+		}
+		body := strings.Join(prose, "\n")
+		stop := strings.Join(stops, "\n")
+		for _, v := range enum {
+			st, _ := v.(string)
+			if st == "" || declared[st] {
+				continue
+			}
+			phrase := strings.ReplaceAll(st, "_", " ")
+			if !strings.Contains(body, phrase) {
+				continue
+			}
+			checked++
+			if !strings.Contains(stop, phrase) && !strings.Contains(stop, "`"+st+"`") {
+				t.Errorf("use case %q names %q, which no shipped signature declares as a surface type; its \"Where it stops today\" line must say so", title, phrase)
+			}
+		}
+	}
+	t.Logf("%d uncovered surface mention(s) checked", checked)
+}
+
 func mustLoad(t *testing.T, rel string) map[string]any {
 	t.Helper()
 	ls, err := loadSignatureFile(filepath.Join(repoRoot, filepath.FromSlash(rel)))

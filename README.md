@@ -20,7 +20,7 @@ cd aiis-signatures/tests/validate
 go run -mod=vendor .
 ```
 
-Where it stops today: a signature judges one document. Behaviour that can be judged across a session, such as what an agent did in which order, is out of scope for this format.
+Where it stops today: a signature judges one document. Behaviour that can be judged across a session, such as what an agent did in which order, is out of scope for this format. No signature yet targets tool descriptions: the schema accepts `tool_description` as a surface type, but no shipped signature declares it.
 
 ### Your MCP server is on the public internet and you did not know
 
