@@ -3,6 +3,7 @@
 ## Unreleased
 
 - The README is shorter: it opens with a link to `signatures/` and an excerpt of one signature, and its reference text moved as written to `docs/schema.md` (signature categories, fields, example signatures, families), `docs/validating.md` (the validator's checks), `docs/use-cases.md` (the longer problem statement of the first use case) and `CONTRIBUTING.md` (repository layout). The README now says which surface types no shipped signature declares yet.
+- The field table in `docs/schema.md` also lists the optional `description` field, which the README's field table left out.
 
 ## corpus v0.4.0 (schema 0.2), 2026-09-08
 

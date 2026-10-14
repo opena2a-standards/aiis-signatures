@@ -22,6 +22,7 @@ Fields common to both categories:
 | `schema_version` | yes | the constant `"0.2"` |
 | `id` | yes | `AIIS-<FAMILY>-<NAME>-<NN>`; the family token is registered in `schema/families.json` and the file lives in `signatures/<family lowercased>/` |
 | `name`, `version`, `severity`, `status` | yes | as before; `status` is `draft` or `active`, and a retired signature is deleted and recorded in `retired-ids.yaml` |
+| `description` | no | free text: what the signature detects |
 | `category` | yes | `injection` or `exposure` |
 | `technique_id` | yes | the primary Agent Threat Matrix technique, resolved against the vendored `matrix.json` |
 | `related_technique_ids` | no | further techniques the same payload evidences; never repeats the primary |
