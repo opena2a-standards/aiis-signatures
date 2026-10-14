@@ -47,3 +47,29 @@ A signature is retired by deleting its file and adding a record to `retired-ids.
 - Contributions are licensed under Apache-2.0, consistent with the project license.
 - Be specific and evidence-based. A new signature should cite the artefact or exposure it matches and include a test case.
 - No purely theoretical claims without a path to validation. Prefer high-precision patterns proven against real samples over broad patterns that raise false positives.
+
+## Repository layout
+
+```
+signatures/                  # one directory per family token, lowercased
+  attr/  comment/  exposure/  header/  hidden/  meta/  script/  unicode/
+    <id>.yaml                # file name equals the id
+schema/
+  aiis-v0.2.schema.json      # the current schema
+  aiis-v0.1.schema.json      # kept for readers of corpus v0.1.0 to v0.3.0
+  families.json              # family token registry
+  exposure-classes.json      # exposure classes and their attack_vector join
+retired-ids.yaml             # every retired id with its disposition; ids are never reused
+crosswalks/
+  technique-signatures.json  # generated: techniques to signatures and back
+vendor/
+  agent-threat-matrix/       # matrix.json and canonical-classes.json at a recorded commit
+  hackmyagent/               # check id list generated from the published package
+tests/
+  fixtures/<id>.json         # shouldMatch and shouldNotMatch cases per signature
+  validate/                  # the validator (Go, vendored dependencies, runs offline)
+```
+
+## Contributing
+
+This standard is early and authored in the open. We are looking for co-authors, an independent second implementation, and high-precision signature contributions before it goes to an external standards body. See [CONTRIBUTING.md](CONTRIBUTING.md) for the review process, for minting a family and for retiring a signature. The corpus is intentionally conservative: high-precision, low-false-positive patterns over coverage.
