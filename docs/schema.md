@@ -1,6 +1,6 @@
 # AIIS signature schema
 
-The format of an AIIS signature file: its two categories, its fields, two example signatures and the family tokens. The JSON Schema files are under [`schema/`](../schema/).
+The format of an AIIS signature file: its two categories, the surfaces an injection hides in, its fields, two example signatures and the family tokens. The JSON Schema files are under [`schema/`](../schema/).
 
 ## Two signature categories
 
@@ -10,6 +10,25 @@ Every signature declares a `category`, and the category selects which classifica
 - **`exposure`** matches evidence that a host publicly exposes an AI component: an MCP server, an LLM gateway, a self-hosted inference server, an agent framework, a vector database. It detects the attack surface, not a specific attack, and carries an `exposure_class`.
 
 There is no default category in schema 0.2.
+
+### Injection surfaces
+
+Prompt injections, jailbreaks, exfiltration instructions, and steganographic payloads hidden in:
+
+- Hidden or invisible text (`display:none`, `visibility:hidden`, 1px text, off-screen)
+- HTML comments
+- HTML attributes (`alt`, `title`, `aria-*`, `data-*`, custom attributes)
+- Script string literals
+- Meta tags and Open Graph metadata
+- JSON-LD structured data
+- `robots.txt` and `llms.txt` overrides
+- HTTP response headers
+- `noscript` and `iframe srcdoc` fallback content
+- Inline styles with embedded instructions
+- Tool descriptions, tool results and tool errors
+- Governance files, memory entries and skill frontmatter
+
+Where it stops today: no shipped signature yet declares `json_ld`, `open_graph`, `noscript`, `inline_style`, `tool_description`, `tool_result`, `tool_error`, `governance_file`, `memory_entry` or `skill_frontmatter` in its `surface_types`; the schema accepts each of these values.
 
 ## Schema
 

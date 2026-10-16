@@ -172,10 +172,10 @@ func TestMatchers(t *testing.T) {
 	}
 }
 
-// A README use case that names a surface type no shipped signature declares
-// must say so in its "Where it stops today" line, so it does not read as
-// covered today.
-func TestReadmeUseCasesNameUncoveredSurfaces(t *testing.T) {
+// A use case in docs/use-cases.md that names a surface type no shipped
+// signature declares must say so in its "Where it stops today" line, so it
+// does not read as covered today.
+func TestUseCasesNameUncoveredSurfaces(t *testing.T) {
 	schemaDoc, err := readJSON[map[string]any](filepath.Join(repoRoot, filepath.FromSlash(schemaPath)))
 	if err != nil {
 		t.Fatal(err)
@@ -203,22 +203,17 @@ func TestReadmeUseCasesNameUncoveredSurfaces(t *testing.T) {
 		}
 	}
 
-	b, err := os.ReadFile(filepath.Join(repoRoot, "README.md"))
+	b, err := os.ReadFile(filepath.Join(repoRoot, "docs", "use-cases.md"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	readme := string(b)
-	start := strings.Index(readme, "\n## Use cases\n")
-	if start < 0 {
-		t.Fatal(`README has no "## Use cases" section`)
-	}
-	section := readme[start+len("\n## Use cases\n"):]
-	if end := strings.Index(section, "\n## "); end >= 0 {
-		section = section[:end]
+	useCases := strings.Split(string(b), "\n## ")[1:]
+	if len(useCases) == 0 {
+		t.Fatal(`docs/use-cases.md has no "## " use case sections`)
 	}
 
 	checked := 0
-	for _, useCase := range strings.Split(section, "\n### ")[1:] {
+	for _, useCase := range useCases {
 		title, _, _ := strings.Cut(useCase, "\n")
 		var prose, stops []string
 		for _, line := range strings.Split(useCase, "\n") {
