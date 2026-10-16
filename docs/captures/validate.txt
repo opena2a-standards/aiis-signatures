@@ -1,0 +1,28 @@
+ok   check  1 schema 0.2 (18 signatures)
+ok   check  2 id grammar
+ok   check  3 family registry and layout
+ok   check  4 technique ids resolve in the matrix snapshot
+ok   check  5 injection attack_class matches the canonical primary class
+ok   check  6 attack_vector is a matrix attack class carrying technique_id
+ok   check  7 exposure_class registered with its attack_vector join
+ok   check  8 canonical classes, matrix vectors and exposure classes are disjoint
+ok   check  9 fixtures present with at least three cases each way
+ok   check 10 fixture cases agree with the matcher
+ok   check 11 retired ids (32 records)
+ok   check 12 technique crosswalk is current
+ok   check 13 vendor manifests and hma_check_ids resolve
+WARNING AIIS-ATTR-EXFIL-URL-01 is active without provenance.first_seen
+WARNING AIIS-ATTR-IGNORE-INST-01 is active without provenance.source
+WARNING AIIS-COMMENT-SYSTEM-OVERRIDE-01 is active without provenance.source
+WARNING AIIS-COMMENT-SYSTEM-OVERRIDE-01 is active without provenance.first_seen
+WARNING AIIS-HEADER-INJECT-01 is active without provenance.source
+WARNING AIIS-HEADER-INJECT-01 is active without provenance.first_seen
+WARNING AIIS-HIDDEN-CHATML-01 is active without provenance.source
+WARNING AIIS-HIDDEN-CHATML-01 is active without provenance.first_seen
+WARNING AIIS-META-LLM-OVERRIDE-01 is active without provenance.source
+WARNING AIIS-META-LLM-OVERRIDE-01 is active without provenance.first_seen
+WARNING AIIS-SCRIPT-ROLE-PLAY-01 is active without provenance.source
+WARNING AIIS-SCRIPT-ROLE-PLAY-01 is active without provenance.first_seen
+WARNING AIIS-UNICODE-TAG-BLOCK-01 is active without provenance.source
+
+13 of 13 checks reported, 0 failure(s), 13 warning(s)

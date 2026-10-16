@@ -1,0 +1,29 @@
+{
+  "command": "go run -mod=vendor .",
+  "directory": "tests/validate",
+  "version": "v0.4.0-3-g9cacf6d",
+  "uncommitted": [
+    "CHANGELOG.md",
+    "docs/validating.md",
+    "tests/validate/main_test.go",
+    "tests/validate/capture/main.go"
+  ],
+  "fixture": "signatures/, tests/fixtures/, schema/, retired-ids.yaml, crosswalks/ and vendor/ of this repository at the recorded version",
+  "date": "2026-10-16T00:42:54Z",
+  "exitCode": 0,
+  "output": "docs/captures/validate.txt",
+  "excerpt": [
+    [
+      1,
+      1
+    ],
+    [
+      13,
+      14
+    ],
+    [
+      27,
+      28
+    ]
+  ]
+}
