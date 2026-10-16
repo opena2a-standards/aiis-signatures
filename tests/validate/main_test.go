@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 )
@@ -245,6 +246,104 @@ func TestReadmeUseCasesNameUncoveredSurfaces(t *testing.T) {
 		}
 	}
 	t.Logf("%d uncovered surface mention(s) checked", checked)
+}
+
+// The README's Validating section shows an excerpt of a recorded validator
+// run. The excerpt must be the recorded output trimmed in place, its caption
+// must name the command and link the full output, and the recorded output
+// must match a fresh run, so a change to the output means a re-capture.
+func TestReadmeValidatingCapture(t *testing.T) {
+	type record struct {
+		Command   string   `json:"command"`
+		Directory string   `json:"directory"`
+		Version   string   `json:"version"`
+		Fixture   string   `json:"fixture"`
+		Date      string   `json:"date"`
+		ExitCode  *int     `json:"exitCode"`
+		Output    string   `json:"output"`
+		Excerpt   [][2]int `json:"excerpt"`
+	}
+	const recapture = "re-capture with: cd tests/validate && go run -mod=vendor ./capture"
+
+	rec, err := readJSON[record](filepath.Join(repoRoot, "docs", "captures", "validate.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec.Command != "go run -mod=vendor ." || rec.Directory != "tests/validate" {
+		t.Errorf("record names command %q in %q, want %q in %q", rec.Command, rec.Directory, "go run -mod=vendor .", "tests/validate")
+	}
+	if rec.Version == "" || rec.Fixture == "" {
+		t.Errorf("record has an empty version or fixture: %+v", rec)
+	}
+	if _, err := time.Parse(time.RFC3339, rec.Date); err != nil {
+		t.Errorf("record date %q: %v", rec.Date, err)
+	}
+	if rec.ExitCode == nil || *rec.ExitCode != 0 {
+		t.Errorf("record exitCode must be 0, the README shows a passing run")
+	}
+	if len(rec.Excerpt) == 0 {
+		t.Fatal("record has no excerpt ranges")
+	}
+
+	b, err := os.ReadFile(filepath.Join(repoRoot, filepath.FromSlash(rec.Output)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	captured := string(b)
+	lines := strings.Split(strings.TrimSuffix(captured, "\n"), "\n")
+	var excerpt []string
+	trimmed := false
+	next := 1
+	for _, r := range rec.Excerpt {
+		if r[0] < next || r[1] < r[0] || r[1] > len(lines) {
+			t.Fatalf("excerpt range %v is out of order or outside the %d recorded lines", r, len(lines))
+		}
+		if r[0] > next {
+			excerpt = append(excerpt, "...")
+			trimmed = true
+		}
+		excerpt = append(excerpt, lines[r[0]-1:r[1]]...)
+		next = r[1] + 1
+	}
+	if next <= len(lines) {
+		excerpt = append(excerpt, "...")
+		trimmed = true
+	}
+	caption := "What `" + rec.Command + "` prints"
+	if trimmed {
+		caption += ", trimmed"
+	}
+	caption += " ([full output](" + rec.Output + ")):"
+
+	rb, err := os.ReadFile(filepath.Join(repoRoot, "README.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	readme := string(rb)
+	start := strings.Index(readme, "\n## Validating\n")
+	if start < 0 {
+		t.Fatal(`README has no "## Validating" section`)
+	}
+	section := readme[start+len("\n## Validating\n"):]
+	if end := strings.Index(section, "\n## "); end >= 0 {
+		section = section[:end]
+	}
+	if !strings.Contains(section, "\n"+rec.Command+"\n") {
+		t.Errorf("the Validating section does not list the recorded command %q", rec.Command)
+	}
+	want := caption + "\n\n```\n" + strings.Join(excerpt, "\n") + "\n```\n"
+	if !strings.Contains(section, want) {
+		t.Errorf("the Validating section does not show the recorded excerpt under its caption; want:\n%s\n%s", want, recapture)
+	}
+
+	var out bytes.Buffer
+	run(repoRoot, false, &out)
+	if strings.Contains(out.String(), "check 11b skipped") {
+		t.Skip("git history unavailable here; the recorded output was not compared with a fresh run")
+	}
+	if out.String() != captured {
+		t.Errorf("%s differs from a fresh validator run; %s\nfresh run:\n%s", rec.Output, recapture, out.String())
+	}
 }
 
 func mustLoad(t *testing.T, rel string) map[string]any {
