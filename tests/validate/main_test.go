@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -355,9 +356,9 @@ func TestReadmeValidatingCapture(t *testing.T) {
 
 // The record names a revision a reader can check out. The recorded version
 // must resolve to a commit here, that commit must be the recorded one, and
-// it must be reachable from origin/main: a capture taken on a pull-request
-// branch that recorded the branch head named a commit the squash merge left
-// out of the repository.
+// it must be reachable from origin/main: a commit made on a pull-request
+// branch is not reachable from main after the squash merge, so a clone of
+// main does not contain it.
 func TestReadmeValidatingCaptureRevisionIsOnMain(t *testing.T) {
 	rec := readCaptureRecord(t)
 	gitOut := func(args ...string) (string, error) {
@@ -389,7 +390,39 @@ func TestReadmeValidatingCaptureRevisionIsOnMain(t *testing.T) {
 		return
 	}
 	if _, err := gitOut("merge-base", "--is-ancestor", got, "origin/main"); err != nil {
-		t.Errorf("record version %q names %s, which is not reachable from origin/main: the capture recorded a branch commit that a squash merge leaves out; %s", rec.Version, got, recapture)
+		t.Errorf("record version %q names %s, which is not reachable from origin/main, so a clone of main does not contain it; %s", rec.Version, got, recapture)
+	}
+}
+
+// The capture record names the merge base because a commit made on a
+// pull-request branch is not reachable from main after the squash merge, so
+// a clone of main does not contain it. The merge does not delete a pushed
+// pull-request commit: GitHub keeps it under refs/pull/<n>/head. The text
+// that explains the record must give the first reason and must not say the
+// merge removed the commit from the repository.
+func TestCaptureTextSaysBranchCommitsAreNotReachableFromMain(t *testing.T) {
+	// This file is scanned too; the pattern's source does not match itself.
+	removed := regexp.MustCompile(`(?i)(?:not|still) in the repository after (?:the|a) (?:squash )?merge|squash merge (?:leaves|left) out`)
+	for _, rel := range []string{"docs/validating.md", "CHANGELOG.md", "tests/validate/capture/main.go", "tests/validate/capture/main_test.go", "tests/validate/main_test.go"} {
+		b, err := os.ReadFile(filepath.Join(repoRoot, filepath.FromSlash(rel)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		// Go comments wrap, so the text is matched with comment markers
+		// and line breaks folded into single spaces.
+		text := strings.Join(strings.Fields(strings.ReplaceAll(string(b), "//", " ")), " ")
+		for _, m := range removed.FindAllString(text, -1) {
+			t.Errorf("%s says %q; a squash merge does not delete a pushed pull-request commit, say that the commit is not reachable from main, so a clone of main does not contain it", rel, m)
+		}
+	}
+	b, err := os.ReadFile(filepath.Join(repoRoot, "docs", "validating.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"not reachable from main", "a clone of main does not contain it"} {
+		if !strings.Contains(string(b), want) {
+			t.Errorf("docs/validating.md must say why the record names the merge base; it does not say %q", want)
+		}
 	}
 }
 

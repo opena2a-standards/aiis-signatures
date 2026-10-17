@@ -11,9 +11,9 @@ import (
 	"testing"
 )
 
-// The record must name a commit that is still in the repository after a
-// squash merge: the merge base of HEAD and origin/main, with the paths
-// committed since it listed, never the branch head.
+// The record must name a commit that is reachable from main after a squash
+// merge: the merge base of HEAD and origin/main, with the paths committed
+// since it listed, never the branch head.
 func TestBaseRevisionNamesTheMergeBaseWithMain(t *testing.T) {
 	root := t.TempDir()
 	for k, v := range map[string]string{
