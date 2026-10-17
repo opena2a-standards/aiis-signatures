@@ -4,6 +4,12 @@
 //
 //	cd tests/validate
 //	go run -mod=vendor ./capture
+//
+// The record names the merge base of HEAD and origin/main rather than HEAD.
+// Pull requests are squash merged, so a commit made on a pull-request branch
+// is not in the repository after the merge, while the merge base is. The
+// paths committed since that commit and the uncommitted paths are listed
+// beside it.
 package main
 
 import (
@@ -29,18 +35,23 @@ const (
 	fence      = "```"
 )
 
-// record is the provenance written beside the output. Excerpt holds the
+// record is the provenance written beside the output. Version and Commit
+// name the merge base of HEAD and origin/main (see baseRevision),
+// ChangedSinceCommit lists the paths committed since it and Uncommitted the
+// paths that differed from HEAD in the working tree. Excerpt holds the
 // 1-based inclusive line ranges of the output that the README shows.
 type record struct {
-	Command     string   `json:"command"`
-	Directory   string   `json:"directory"`
-	Version     string   `json:"version"`
-	Uncommitted []string `json:"uncommitted"`
-	Fixture     string   `json:"fixture"`
-	Date        string   `json:"date"`
-	ExitCode    int      `json:"exitCode"`
-	Output      string   `json:"output"`
-	Excerpt     [][2]int `json:"excerpt"`
+	Command            string   `json:"command"`
+	Directory          string   `json:"directory"`
+	Version            string   `json:"version"`
+	Commit             string   `json:"commit"`
+	ChangedSinceCommit []string `json:"changedSinceCommit"`
+	Uncommitted        []string `json:"uncommitted"`
+	Fixture            string   `json:"fixture"`
+	Date               string   `json:"date"`
+	ExitCode           int      `json:"exitCode"`
+	Output             string   `json:"output"`
+	Excerpt            [][2]int `json:"excerpt"`
 }
 
 func main() {
@@ -55,7 +66,7 @@ func main() {
 func capture(root string) error {
 	abs := func(rel string) string { return filepath.Join(root, filepath.FromSlash(rel)) }
 
-	version, err := git(root, "describe", "--tags", "--always")
+	rev, err := baseRevision(root)
 	if err != nil {
 		return err
 	}
@@ -69,7 +80,7 @@ func capture(root string) error {
 			continue
 		}
 		path := line[3:]
-		if path == outputPath || path == recordPath || path == readmePath {
+		if capturePath(path) {
 			continue
 		}
 		uncommitted = append(uncommitted, path)
@@ -103,15 +114,17 @@ func capture(root string) error {
 	caption += " ([full output](" + outputPath + ")):"
 
 	rec := record{
-		Command:     command,
-		Directory:   directory,
-		Version:     version,
-		Uncommitted: uncommitted,
-		Fixture:     "signatures/, tests/fixtures/, schema/, retired-ids.yaml, crosswalks/ and vendor/ of this repository at the recorded version",
-		Date:        date,
-		ExitCode:    exitCode,
-		Output:      outputPath,
-		Excerpt:     ranges,
+		Command:            command,
+		Directory:          directory,
+		Version:            rev.Version,
+		Commit:             rev.Commit,
+		ChangedSinceCommit: rev.ChangedSinceCommit,
+		Uncommitted:        uncommitted,
+		Fixture:            "signatures/, tests/fixtures/, schema/, retired-ids.yaml, crosswalks/ and vendor/ of this repository at the recorded commit, with the changedSinceCommit and uncommitted paths as they were when the capture ran",
+		Date:               date,
+		ExitCode:           exitCode,
+		Output:             outputPath,
+		Excerpt:            ranges,
 	}
 	recJSON, err := json.MarshalIndent(rec, "", "  ")
 	if err != nil {
@@ -144,6 +157,48 @@ func git(root string, args ...string) (string, error) {
 		return "", fmt.Errorf("git %s: %v: %s", strings.Join(args, " "), err, strings.TrimSpace(stderr.String()))
 	}
 	return strings.TrimRight(stdout.String(), "\n"), nil
+}
+
+// revision names the commit a record is relative to.
+type revision struct {
+	Version            string   // git describe --tags --always --long of Commit
+	Commit             string   // the merge base of HEAD and origin/main, 40 hex characters
+	ChangedSinceCommit []string // paths committed between Commit and HEAD, capture outputs left out
+}
+
+// baseRevision describes the merge base of HEAD and origin/main. The record
+// names that commit and not HEAD because pull requests are squash merged: a
+// commit made on the branch is not in the repository after the merge, the
+// merge base is. Version takes the --long form so it carries the commit even
+// when the merge base is a tagged commit, and --always falls back to the
+// bare abbreviated commit when no tag is reachable from it.
+func baseRevision(root string) (revision, error) {
+	commit, err := git(root, "merge-base", "HEAD", "origin/main")
+	if err != nil {
+		return revision{}, fmt.Errorf("%v; the record names a commit on main, so origin/main must be present", err)
+	}
+	version, err := git(root, "describe", "--tags", "--always", "--long", commit)
+	if err != nil {
+		return revision{}, err
+	}
+	changed, err := git(root, "diff", "--name-only", commit, "HEAD")
+	if err != nil {
+		return revision{}, err
+	}
+	rev := revision{Version: version, Commit: commit, ChangedSinceCommit: []string{}}
+	for _, path := range strings.Split(changed, "\n") {
+		if path == "" || capturePath(path) {
+			continue
+		}
+		rev.ChangedSinceCommit = append(rev.ChangedSinceCommit, path)
+	}
+	return rev, nil
+}
+
+// capturePath reports whether path is one the capture itself writes; those
+// are left out of the changed and uncommitted lists.
+func capturePath(path string) bool {
+	return path == outputPath || path == recordPath || path == readmePath
 }
 
 // excerptRanges picks the lines the README shows: the first and the last
