@@ -130,6 +130,12 @@ func capture(root string) error {
 	if err != nil {
 		return err
 	}
+	// The README is checked before any file is written, so a run that cannot
+	// rewrite the excerpt leaves docs/captures/ as it was.
+	readme, err := rewrittenReadme(abs(readmePath), caption, block)
+	if err != nil {
+		return err
+	}
 
 	if err := os.MkdirAll(filepath.Dir(abs(outputPath)), 0o755); err != nil {
 		return err
@@ -140,7 +146,7 @@ func capture(root string) error {
 	if err := os.WriteFile(abs(recordPath), append(recJSON, '\n'), 0o644); err != nil {
 		return err
 	}
-	if err := rewriteReadme(abs(readmePath), caption, block); err != nil {
+	if err := os.WriteFile(abs(readmePath), readme, 0o644); err != nil {
 		return err
 	}
 	fmt.Printf("wrote %s, %s and the excerpt in %s\n", outputPath, recordPath, readmePath)
@@ -264,12 +270,13 @@ func excerpt(lines []string, ranges [][2]int) ([]string, bool) {
 	return block, trimmed
 }
 
-// rewriteReadme replaces the caption line for the command and the fenced
-// block after it. The caption must be followed by a blank line and a fence.
-func rewriteReadme(path, caption string, block []string) error {
+// rewrittenReadme returns the README at path with the caption line for the
+// command and the fenced block after it replaced, and writes nothing. The
+// caption must be followed by a blank line and a fence.
+func rewrittenReadme(path, caption string, block []string) ([]byte, error) {
 	b, err := os.ReadFile(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	lines := strings.Split(string(b), "\n")
 	prefix := "What `" + command + "` prints"
@@ -281,10 +288,10 @@ func rewriteReadme(path, caption string, block []string) error {
 		}
 	}
 	if at < 0 {
-		return fmt.Errorf("%s has no line starting %q", readmePath, prefix)
+		return nil, fmt.Errorf("%s has no line starting %q", readmePath, prefix)
 	}
 	if at+2 >= len(lines) || lines[at+1] != "" || lines[at+2] != fence {
-		return fmt.Errorf("%s: the caption on line %d must be followed by a blank line and a %s fence", readmePath, at+1, fence)
+		return nil, fmt.Errorf("%s: the caption on line %d must be followed by a blank line and a %s fence", readmePath, at+1, fence)
 	}
 	end := -1
 	for i := at + 3; i < len(lines); i++ {
@@ -294,7 +301,7 @@ func rewriteReadme(path, caption string, block []string) error {
 		}
 	}
 	if end < 0 {
-		return fmt.Errorf("%s: the fence after the caption on line %d is not closed", readmePath, at+1)
+		return nil, fmt.Errorf("%s: the fence after the caption on line %d is not closed", readmePath, at+1)
 	}
 
 	var rewritten []string
@@ -302,5 +309,5 @@ func rewriteReadme(path, caption string, block []string) error {
 	rewritten = append(rewritten, caption, "", fence)
 	rewritten = append(rewritten, block...)
 	rewritten = append(rewritten, lines[end:]...)
-	return os.WriteFile(path, []byte(strings.Join(rewritten, "\n")), 0o644)
+	return []byte(strings.Join(rewritten, "\n")), nil
 }
