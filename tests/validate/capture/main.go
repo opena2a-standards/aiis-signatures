@@ -7,9 +7,9 @@
 //
 // The record names the merge base of HEAD and origin/main rather than HEAD.
 // Pull requests are squash merged, so a commit made on a pull-request branch
-// is not in the repository after the merge, while the merge base is. The
-// paths committed since that commit and the uncommitted paths are listed
-// beside it.
+// is not reachable from main after the merge and a clone of main does not
+// contain it, while the merge base is reachable from main. The paths
+// committed since that commit and the uncommitted paths are listed beside it.
 package main
 
 import (
@@ -174,10 +174,11 @@ type revision struct {
 
 // baseRevision describes the merge base of HEAD and origin/main. The record
 // names that commit and not HEAD because pull requests are squash merged: a
-// commit made on the branch is not in the repository after the merge, the
-// merge base is. Version takes the --long form so it carries the commit even
-// when the merge base is a tagged commit, and --always falls back to the
-// bare abbreviated commit when no tag is reachable from it.
+// commit made on the branch is not reachable from main after the merge, so a
+// clone of main does not contain it, while the merge base is reachable from
+// main. Version takes the --long form so it carries the commit even when the
+// merge base is a tagged commit, and --always falls back to the bare
+// abbreviated commit when no tag is reachable from it.
 func baseRevision(root string) (revision, error) {
 	commit, err := git(root, "merge-base", "HEAD", "origin/main")
 	if err != nil {
