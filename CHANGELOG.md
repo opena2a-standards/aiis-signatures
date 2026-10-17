@@ -6,6 +6,7 @@
 - The field table in `docs/schema.md` also lists the optional `description` field, which the README's field table left out.
 - The README's Validating section shows a trimmed excerpt of a recorded validator run. `docs/captures/validate.txt` holds the untrimmed output and `docs/captures/validate.json` the command, version, date, exit code and the line ranges shown. `go run -mod=vendor ./capture` in `tests/validate` records the run again and rewrites the excerpt, and `go test` compares the recorded output with a fresh run.
 - The README is shorter again: its use cases moved as written to `docs/use-cases.md`, and the list of injection surfaces to `docs/schema.md`. The test that each use case names its uncovered surface types now reads `docs/use-cases.md`.
+- `docs/captures/validate.json` names the merge base of the captured branch and origin/main, as `version` and `commit`, and lists the paths committed since it under `changedSinceCommit`. The earlier record named the branch head, which a squash merge leaves out of the repository. `go test` now checks that the recorded version resolves to the recorded commit and that the commit is reachable from origin/main.
 
 ## corpus v0.4.0 (schema 0.2), 2026-09-08
 

@@ -3,7 +3,9 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -243,32 +245,42 @@ func TestUseCasesNameUncoveredSurfaces(t *testing.T) {
 	t.Logf("%d uncovered surface mention(s) checked", checked)
 }
 
+// captureRecord is docs/captures/validate.json as the capture tool writes it.
+type captureRecord struct {
+	Command            string   `json:"command"`
+	Directory          string   `json:"directory"`
+	Version            string   `json:"version"`
+	Commit             string   `json:"commit"`
+	ChangedSinceCommit []string `json:"changedSinceCommit"`
+	Fixture            string   `json:"fixture"`
+	Date               string   `json:"date"`
+	ExitCode           *int     `json:"exitCode"`
+	Output             string   `json:"output"`
+	Excerpt            [][2]int `json:"excerpt"`
+}
+
+const recapture = "re-capture with: cd tests/validate && go run -mod=vendor ./capture"
+
+func readCaptureRecord(t *testing.T) captureRecord {
+	t.Helper()
+	rec, err := readJSON[captureRecord](filepath.Join(repoRoot, "docs", "captures", "validate.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return rec
+}
+
 // The README's Validating section shows an excerpt of a recorded validator
 // run. The excerpt must be the recorded output trimmed in place, its caption
 // must name the command and link the full output, and the recorded output
 // must match a fresh run, so a change to the output means a re-capture.
 func TestReadmeValidatingCapture(t *testing.T) {
-	type record struct {
-		Command   string   `json:"command"`
-		Directory string   `json:"directory"`
-		Version   string   `json:"version"`
-		Fixture   string   `json:"fixture"`
-		Date      string   `json:"date"`
-		ExitCode  *int     `json:"exitCode"`
-		Output    string   `json:"output"`
-		Excerpt   [][2]int `json:"excerpt"`
-	}
-	const recapture = "re-capture with: cd tests/validate && go run -mod=vendor ./capture"
-
-	rec, err := readJSON[record](filepath.Join(repoRoot, "docs", "captures", "validate.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
+	rec := readCaptureRecord(t)
 	if rec.Command != "go run -mod=vendor ." || rec.Directory != "tests/validate" {
 		t.Errorf("record names command %q in %q, want %q in %q", rec.Command, rec.Directory, "go run -mod=vendor .", "tests/validate")
 	}
-	if rec.Version == "" || rec.Fixture == "" {
-		t.Errorf("record has an empty version or fixture: %+v", rec)
+	if rec.Version == "" || rec.Commit == "" || rec.Fixture == "" {
+		t.Errorf("record has an empty version, commit or fixture: %+v", rec)
 	}
 	if _, err := time.Parse(time.RFC3339, rec.Date); err != nil {
 		t.Errorf("record date %q: %v", rec.Date, err)
@@ -338,6 +350,46 @@ func TestReadmeValidatingCapture(t *testing.T) {
 	}
 	if out.String() != captured {
 		t.Errorf("%s differs from a fresh validator run; %s\nfresh run:\n%s", rec.Output, recapture, out.String())
+	}
+}
+
+// The record names a revision a reader can check out. The recorded version
+// must resolve to a commit here, that commit must be the recorded one, and
+// it must be reachable from origin/main: a capture taken on a pull-request
+// branch that recorded the branch head named a commit the squash merge left
+// out of the repository.
+func TestReadmeValidatingCaptureRevisionIsOnMain(t *testing.T) {
+	rec := readCaptureRecord(t)
+	gitOut := func(args ...string) (string, error) {
+		cmd := exec.Command("git", append([]string{"-C", repoRoot}, args...)...)
+		var stdout, stderr bytes.Buffer
+		cmd.Stdout, cmd.Stderr = &stdout, &stderr
+		if err := cmd.Run(); err != nil {
+			return "", fmt.Errorf("git %s: %v: %s", strings.Join(args, " "), err, strings.TrimSpace(stderr.String()))
+		}
+		return strings.TrimSpace(stdout.String()), nil
+	}
+	shallow, err := gitOut("rev-parse", "--is-shallow-repository")
+	if err != nil {
+		t.Skipf("git history unavailable here; the recorded revision was not resolved: %v", err)
+	}
+	if shallow == "true" {
+		t.Skip("shallow clone; the recorded revision was not resolved")
+	}
+
+	got, err := gitOut("rev-parse", "--verify", "--quiet", rec.Version+"^{commit}")
+	if err != nil {
+		t.Fatalf("record version %q does not resolve to a commit here (%v); %s", rec.Version, err, recapture)
+	}
+	if rec.Commit != got {
+		t.Errorf("record commit %q, want %s, the commit that version %q names; %s", rec.Commit, got, rec.Version, recapture)
+	}
+	if _, err := gitOut("rev-parse", "--verify", "--quiet", "origin/main^{commit}"); err != nil {
+		t.Logf("origin/main unavailable here; whether the recorded commit is reachable from main was not checked: %v", err)
+		return
+	}
+	if _, err := gitOut("merge-base", "--is-ancestor", got, "origin/main"); err != nil {
+		t.Errorf("record version %q names %s, which is not reachable from origin/main: the capture recorded a branch commit that a squash merge leaves out; %s", rec.Version, got, recapture)
 	}
 }
 
