@@ -15,17 +15,8 @@ import (
 // merge: the merge base of HEAD and origin/main, with the paths committed
 // since it listed, never the branch head.
 func TestBaseRevisionNamesTheMergeBaseWithMain(t *testing.T) {
+	isolateGit(t)
 	root := t.TempDir()
-	for k, v := range map[string]string{
-		"GIT_CONFIG_GLOBAL":   os.DevNull,
-		"GIT_CONFIG_NOSYSTEM": "1",
-		"GIT_AUTHOR_NAME":     "capture test",
-		"GIT_AUTHOR_EMAIL":    "capture@example.invalid",
-		"GIT_COMMITTER_NAME":  "capture test",
-		"GIT_COMMITTER_EMAIL": "capture@example.invalid",
-	} {
-		t.Setenv(k, v)
-	}
 	run := func(args ...string) string {
 		t.Helper()
 		out, err := exec.Command("git", append([]string{"-C", root}, args...)...).CombinedOutput()
@@ -107,11 +98,54 @@ WARNING two
 3 of 3 checks reported, 0 failure(s), 2 warning(s)
 `
 
+// isolateGit points the git commands a test runs at the test's own
+// repositories, whatever the caller exported. Git exports an absolute
+// GIT_DIR to hooks and to `git rebase -x` commands, and GIT_INDEX_FILE to
+// commit hooks; `git -C <tempdir>` run with those set acts on the repository
+// and index they name, not on <tempdir>. The variables that name a
+// repository, work tree, index or object store are unset for the test's
+// duration, the global and system configuration are left unread, and the
+// identity a commit needs comes from the environment rather than from the
+// caller's configuration. The caller's values are restored on cleanup.
+func isolateGit(t *testing.T) {
+	t.Helper()
+	for _, k := range []string{
+		"GIT_DIR",
+		"GIT_WORK_TREE",
+		"GIT_INDEX_FILE",
+		"GIT_COMMON_DIR",
+		"GIT_OBJECT_DIRECTORY",
+		"GIT_ALTERNATE_OBJECT_DIRECTORIES",
+	} {
+		unsetenv(t, k)
+	}
+	for k, v := range map[string]string{
+		"GIT_CONFIG_GLOBAL":   os.DevNull,
+		"GIT_CONFIG_NOSYSTEM": "1",
+		"GIT_AUTHOR_NAME":     "capture test",
+		"GIT_AUTHOR_EMAIL":    "capture@example.invalid",
+		"GIT_COMMITTER_NAME":  "capture test",
+		"GIT_COMMITTER_EMAIL": "capture@example.invalid",
+	} {
+		t.Setenv(k, v)
+	}
+}
+
+// unsetenv unsets key for the test's duration. t.Setenv records the value
+// the caller had, or that it had none, and restores that on cleanup; it also
+// marks the test as one that cannot run in parallel.
+func unsetenv(t *testing.T, key string) {
+	t.Helper()
+	t.Setenv(key, "")
+	os.Unsetenv(key)
+}
+
 // stubRoot returns a git repository holding readme as README.md and, under
 // tests/validate, a stand-in validator that prints stubOutput and exits 0.
 // Its one commit is also origin/main, as in a clone of main.
 func stubRoot(t *testing.T, readme string) string {
 	t.Helper()
+	isolateGit(t)
 	root := t.TempDir()
 	writeFile(t, root, readmePath, readme)
 	writeFile(t, root, directory+"/go.mod", "module stub\n\ngo 1.22\n")
@@ -211,5 +245,66 @@ func TestCaptureWritesOutputRecordAndExcerpt(t *testing.T) {
 		"```\n\nAfter.\n"
 	if got := readFile(t, root, readmePath); got != want {
 		t.Errorf("%s:\n%s\nwant:\n%s", readmePath, got, want)
+	}
+}
+
+// Git exports an absolute GIT_DIR to hooks and to `git rebase -x` commands,
+// and GIT_INDEX_FILE to commit hooks. The tests of this package build their
+// repositories with `git -C <tempdir>`, which those variables override: run
+// from a pre-commit hook of a linked worktree, they used to commit, tag and
+// move refs in that worktree's repository and move its HEAD and index. This
+// test runs the other tests in a child process whose GIT_DIR and
+// GIT_INDEX_FILE name a linked worktree of a scratch repository, and checks
+// that they pass and that the scratch repository's refs, HEADs and index are
+// as they were.
+func TestTestsLeaveTheCallersRepositoryUnchanged(t *testing.T) {
+	isolateGit(t)
+	dir := t.TempDir()
+	outer, wt := filepath.Join(dir, "outer"), filepath.Join(dir, "wt")
+	run := func(dir string, args ...string) string {
+		t.Helper()
+		out, err := git(dir, args...)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return out
+	}
+	commit := func(dir, name string) {
+		t.Helper()
+		if err := os.WriteFile(filepath.Join(dir, name), []byte(name+"\n"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		run(dir, "add", "--", name)
+		run(dir, "commit", "-q", "-m", name)
+	}
+	run(dir, "init", "-q", outer)
+	run(outer, "symbolic-ref", "HEAD", "refs/heads/main")
+	commit(outer, "one.txt")
+	run(outer, "worktree", "add", "-q", "-b", "topic", wt)
+	commit(wt, "two.txt")
+	snapshot := func() string {
+		t.Helper()
+		return strings.Join([]string{
+			run(outer, "for-each-ref", "--format=%(refname) %(objectname)"),
+			"outer HEAD " + run(outer, "symbolic-ref", "HEAD"),
+			"wt HEAD " + run(wt, "symbolic-ref", "HEAD"),
+			"wt status [" + run(wt, "status", "--porcelain") + "]",
+		}, "\n")
+	}
+	before := snapshot()
+
+	exe, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	gitDir := run(wt, "rev-parse", "--absolute-git-dir")
+	cmd := exec.Command(exe, "-test.skip=^"+t.Name()+"$")
+	cmd.Env = append(os.Environ(), "GIT_DIR="+gitDir, "GIT_INDEX_FILE="+filepath.Join(gitDir, "index"))
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		t.Errorf("the other tests failed with GIT_DIR=%s: %v\n%s", gitDir, err, out)
+	}
+	if after := snapshot(); after != before {
+		t.Errorf("the other tests changed the repository GIT_DIR named:\nbefore:\n%s\nafter:\n%s", before, after)
 	}
 }
