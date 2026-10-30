@@ -76,6 +76,15 @@ WARNING AIIS-ATTR-EXFIL-URL-01 is active without provenance.first_seen
 
 The validator exits 1 when any check fails. A missing `provenance.source` or `provenance.first_seen` on an active signature prints a warning. `go run -mod=vendor . -write-crosswalk` regenerates `crosswalks/technique-signatures.json`. Every check it runs is listed in [`docs/validating.md`](docs/validating.md).
 
+## Who this is for
+
+- **Security leaders and CISOs**: how to compare one vendor's injection detection with another's, and the evidence to ask for.
+- **IAM professionals and identity architects**: where AIIS touches access control, and that it authenticates and grants nothing.
+- **Platform and security engineers, and implementers of other scanners**: what each signature matches, and how to check a matcher against the fixtures.
+- **GRC, audit and compliance readers, and standards reviewers**: what one rule maps to, and how mature the format is.
+
+[`docs/use-cases.md`](docs/use-cases.md) gives each reader's question and where the standard answers it.
+
 ## Using AIIS signatures
 
 - **OpenA2A HoneyMap** consumes these signatures as its first classifier tier.
@@ -87,7 +96,7 @@ The validator exits 1 when any check fails. A missing `provenance.source` or `pr
 
 - [`docs/schema.md`](docs/schema.md): the two signature categories, the injection surfaces, every field, one example signature per category, and the family tokens.
 - [`docs/validating.md`](docs/validating.md): each check the validator runs, its warnings, and regenerating the crosswalk.
-- [`docs/use-cases.md`](docs/use-cases.md): two use cases, what you can check today, where each stops, and how to check the claims yourself.
+- [`docs/use-cases.md`](docs/use-cases.md): who reads this standard, and six use cases, what you can check today, where each stops, and how to check the claims yourself.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md): the review process, the repository layout, minting a family and retiring a signature.
 - [`CHANGELOG.md`](CHANGELOG.md): each corpus and schema release.
 
