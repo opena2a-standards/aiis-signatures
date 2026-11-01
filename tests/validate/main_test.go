@@ -54,7 +54,7 @@ func TestCorpusPasses(t *testing.T) {
 	if code := run(repoRoot, false, &out); code != 0 {
 		t.Fatalf("validator exit %d:\n%s", code, out.String())
 	}
-	if !strings.Contains(out.String(), "13 of 13 checks reported, 0 failure(s)") {
+	if !strings.Contains(out.String(), "14 of 14 checks reported, 0 failure(s)") {
 		t.Fatalf("unexpected summary:\n%s", out.String())
 	}
 }

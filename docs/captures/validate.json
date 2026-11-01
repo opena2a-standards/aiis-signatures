@@ -1,18 +1,20 @@
 {
   "command": "go run -mod=vendor .",
   "directory": "tests/validate",
-  "version": "v0.4.0-5-gb3091bc",
-  "commit": "b3091bca4e15efcc4853a27b90789da82596b865",
+  "version": "v0.4.0-10-g36e9266",
+  "commit": "36e92660923aff1849178852ec4222f01fdb6014",
   "changedSinceCommit": [
     "CHANGELOG.md",
+    "docs/use-cases.md",
     "docs/validating.md",
-    "tests/validate/capture/main.go",
-    "tests/validate/capture/main_test.go",
+    "tests/validate/advisory.go",
+    "tests/validate/advisory_test.go",
+    "tests/validate/main.go",
     "tests/validate/main_test.go"
   ],
   "uncommitted": [],
   "fixture": "signatures/, tests/fixtures/, schema/, retired-ids.yaml, crosswalks/ and vendor/ of this repository at the recorded commit, with the changedSinceCommit and uncommitted paths as they were when the capture ran",
-  "date": "2026-10-17T10:33:30Z",
+  "date": "2026-11-01T05:55:31Z",
   "exitCode": 0,
   "output": "docs/captures/validate.txt",
   "excerpt": [
@@ -21,12 +23,12 @@
       1
     ],
     [
-      13,
-      14
+      14,
+      15
     ],
     [
-      27,
-      28
+      28,
+      29
     ]
   ]
 }

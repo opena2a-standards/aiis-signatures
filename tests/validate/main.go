@@ -6,7 +6,8 @@
 // Threat Matrix snapshot, the canonical class list, the exposure class
 // registry and the vendored HackMyAgent check id list, runs every fixture
 // case through a real implementation of the four match types, checks the
-// retired id list, and regenerates the technique crosswalk. Every check
+// retired id list, regenerates the technique crosswalk, and reads every
+// signature file and fixture for an advisory id or advisory URL. Every check
 // prints one ok or FAIL line; WARNING lines never fail the run.
 package main
 
@@ -42,7 +43,7 @@ const (
 	signaturesDir     = "signatures"
 	fixturesDir       = "tests/fixtures"
 	minFixtureCases   = 3
-	totalChecks       = 13
+	totalChecks       = 14
 	retiredDateFormat = `^\d{4}-\d{2}-\d{2}$`
 )
 
@@ -649,6 +650,9 @@ func run(root string, writeCrosswalk bool, out io.Writer) int {
 		}
 		r.check(13, "vendor manifests and hma_check_ids resolve", errs)
 	}
+
+	// Check 14: no signature file or fixture names an advisory (advisory.go).
+	r.check(14, "no advisory id or advisory URL in signatures or fixtures", checkAdvisoryKeys(root))
 
 	// Provenance completeness is advisory.
 	for _, s := range sigs {
