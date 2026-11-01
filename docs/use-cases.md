@@ -59,7 +59,7 @@ What you can do today: run the validator and read its schema, fixture and matche
 ok   check  1 schema 0.2 (18 signatures)
 ok   check  9 fixtures present with at least three cases each way
 ok   check 10 fixture cases agree with the matcher
-13 of 13 checks reported, 0 failure(s), 13 warning(s)
+14 of 14 checks reported, 0 failure(s), 13 warning(s)
 ```
 
 Where it stops today: the fixtures run through the reference matcher in [`tests/validate/`](../tests/validate/); there is no packaged runner that takes another tool's results.
@@ -147,7 +147,7 @@ grep -h "^status:" signatures/*/*.yaml | sort | uniq -c
 ```
   10 status: active
    8 status: draft
-13 of 13 checks reported, 0 failure(s), 13 warning(s)
+14 of 14 checks reported, 0 failure(s), 13 warning(s)
 ```
 
 Where it stops today: the repository compares the format with YARA only and does not relate it to other detection rule formats. The threat matrix release that technique ids resolve against is pinned in [`vendor/agent-threat-matrix/VENDOR.json`](../vendor/agent-threat-matrix/VENDOR.json) (1.1), behind the matrix's own repository (1.2).

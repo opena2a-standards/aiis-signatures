@@ -67,11 +67,11 @@ What `go run -mod=vendor .` prints, trimmed ([full output](docs/captures/validat
 ```
 ok   check  1 schema 0.2 (18 signatures)
 ...
-ok   check 13 vendor manifests and hma_check_ids resolve
+ok   check 14 no advisory id or advisory URL in signatures or fixtures
 WARNING AIIS-ATTR-EXFIL-URL-01 is active without provenance.first_seen
 ...
 
-13 of 13 checks reported, 0 failure(s), 13 warning(s)
+14 of 14 checks reported, 0 failure(s), 13 warning(s)
 ```
 
 The validator exits 1 when any check fails. A missing `provenance.source` or `provenance.first_seen` on an active signature prints a warning. `go run -mod=vendor . -write-crosswalk` regenerates `crosswalks/technique-signatures.json`. Every check it runs is listed in [`docs/validating.md`](docs/validating.md).

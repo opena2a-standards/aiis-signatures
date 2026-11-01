@@ -11,6 +11,7 @@ ok   check 10 fixture cases agree with the matcher
 ok   check 11 retired ids (32 records)
 ok   check 12 technique crosswalk is current
 ok   check 13 vendor manifests and hma_check_ids resolve
+ok   check 14 no advisory id or advisory URL in signatures or fixtures
 WARNING AIIS-ATTR-EXFIL-URL-01 is active without provenance.first_seen
 WARNING AIIS-ATTR-IGNORE-INST-01 is active without provenance.source
 WARNING AIIS-COMMENT-SYSTEM-OVERRIDE-01 is active without provenance.source
@@ -25,4 +26,4 @@ WARNING AIIS-SCRIPT-ROLE-PLAY-01 is active without provenance.source
 WARNING AIIS-SCRIPT-ROLE-PLAY-01 is active without provenance.first_seen
 WARNING AIIS-UNICODE-TAG-BLOCK-01 is active without provenance.source
 
-13 of 13 checks reported, 0 failure(s), 13 warning(s)
+14 of 14 checks reported, 0 failure(s), 13 warning(s)
