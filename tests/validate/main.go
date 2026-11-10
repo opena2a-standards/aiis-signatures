@@ -9,6 +9,8 @@
 // retired id list, regenerates the technique crosswalk, and reads every
 // signature file and fixture for an advisory id or advisory URL. Every check
 // prints one ok or FAIL line; WARNING lines never fail the run.
+//
+// With -mutate it runs the evasion bench of mutate.go instead of the checks.
 package main
 
 import (
@@ -195,7 +197,19 @@ func (r *report) warn(format string, args ...any) {
 func main() {
 	root := flag.String("root", "../..", "repository root")
 	writeCrosswalk := flag.Bool("write-crosswalk", false, "regenerate "+crosswalkPath+" instead of comparing it")
+	mutate := flag.Bool("mutate", false, "run the evasion bench instead of the checks: print one row per signature and write "+mutateCountsPath)
 	flag.Parse()
+	if *mutate {
+		if *writeCrosswalk {
+			fmt.Fprintln(os.Stderr, "-mutate and -write-crosswalk are separate runs; pass one of them")
+			os.Exit(2)
+		}
+		os.Exit(runMutate(benchOptions{
+			root:       *root,
+			operators:  benchOperators(),
+			countsPath: filepath.Join(*root, filepath.FromSlash(mutateCountsPath)),
+		}, os.Stdout))
+	}
 	code := run(*root, *writeCrosswalk, os.Stdout)
 	os.Exit(code)
 }

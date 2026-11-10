@@ -1,0 +1,2 @@
+# Counts written by `go run -mod=vendor . -mutate`: a run artifact, rebuilt by running the bench.
+/testdata/mutate-counts.json
